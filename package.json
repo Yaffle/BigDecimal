@@ -1,0 +1,26 @@
+{
+  "name": "bigdecimal",
+  "version": "1.0.0",
+  "description": "base-10 decimal numbers",
+  "main": "BigDecimal.js",
+  "scripts": {
+    "test": "node --experimental-modules tests.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yaffle/BigDecimal.git"
+  },
+  "keywords": [
+    "arbitrary",
+    "precision",
+    "decimal",
+    "arithmetic",
+    "bigdecimal"
+  ],
+  "author": "Viktor Mukhachev",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Yaffle/BigDecimal/issues"
+  },
+  "homepage": "https://github.com/Yaffle/BigDecimal#readme"
+}
