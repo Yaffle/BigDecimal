@@ -1,7 +1,12 @@
 # BigDecimal
 a polyfill for decimal propocal - https://github.com/tc39/proposal-decimal
+It is implemented on the top of native BigInt.
+It can be compiled using https://www.npmjs.com/package/babel-plugin-transform-bigint to use JSBI.
 
 # Usage:
+
+## Installation:
+`npm install @yaffle/bigdecimal`
 
 ## Type conversion:
 
@@ -53,6 +58,17 @@ a polyfill for decimal propocal - https://github.com/tc39/proposal-decimal
 `BigDecimal.atan(a, rounding)`
 
 The `rounding` argument may look like `{maximumFractionDigits: 10, roundingMode: "half-even"}` or `{maximumSignificantDigits: 10, roundingMode: "half-even"}`, where the roundingMode can be "floor", or "ceil", or "half-even", or "half-up".
+
+## Example:
+```javascript
+
+import BigDecimal from './node_modules/@yaffle/bigdecimal/BigDecimal.js';
+
+var pi = BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), {maximumSignificantDigits: 1000, roundingMode: 'half-even'}));
+
+console.log(pi.toString());
+
+```
 
 # Similar projects:
 1. https://github.com/MikeMcl/decimal.js/
