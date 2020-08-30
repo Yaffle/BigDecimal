@@ -1,9 +1,5 @@
 
-// The library bigdecimal.min.mjs can be found at https://github.com/MikeMcl/bignumber.js/issues/256#issuecomment-594232313 .
-
-import BigDecimal2 from './bigdecimal.min.mjs';
-//import BigDecimal from './BigDecimalByDecimal.js.js';
-//import BigDecimal from './bigdecimal.min.mjs';
+import BigDecimal2 from './BigDecimalByDecimal.js.js';
 import BigDecimal from './BigDecimal.js';
 
 console.time();
@@ -85,6 +81,8 @@ console.assert(BigDecimal.divide(BigDecimal.BigDecimal('6e-6'), BigDecimal.BigDe
 // console.time(); exponentiate(BigDecimal.BigDecimal(10), 1000000n); console.timeEnd();
 //console.assert(BigDecimal.divide(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(10), {maximumSignificantDigits: 1e15}).toString(), '?'); // performance
 //console.assert(BigDecimal.divide(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(10), {maximumFractionDigits: 1e15}).toString(), '?'); // performance
+//console.assert(BigDecimal.exp(BigDecimal.BigDecimal('1e+100'), { maximumSignificantDigits: 1, roundingMode: 'half-even' }).toString() === '2e+4342944819032518276511289189166050822943970058036665661144537831658646492088707747292249493384317483');
+//console.assert(BigDecimal.exp(BigDecimal.BigDecimal('-1e+100'), { maximumSignificantDigits: 1, roundingMode: 'half-even' }).toString() === '7e-4342944819032518276511289189166050822943970058036665661144537831658646492088707747292249493384317484');
 
 // fromString
 //console.assert(BigDecimal.BigDecimal(' +1.2e+3 ').toString() === '120');
@@ -135,6 +133,7 @@ console.assert(BigDecimal.sin(BigDecimal.BigDecimal(0), { maximumSignificantDigi
 console.assert(BigDecimal.sin(BigDecimal.BigDecimal(0), { maximumSignificantDigits: 16, roundingMode: 'half-even' }).toString() === '0');
 console.assert(BigDecimal.sin(BigDecimal.BigDecimal(0), { maximumSignificantDigits: 16, roundingMode: 'floor' }).toString() === '0');
 console.assert(BigDecimal.equal(BigDecimal.sin(BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 16, roundingMode: 'floor' }), BigDecimal.unaryMinus(BigDecimal.sin(BigDecimal.BigDecimal(2), { maximumSignificantDigits: 16, roundingMode: 'ceil' }))));
+//console.assert(BigDecimal.sin(BigDecimal.BigDecimal('25e-10000'), { maximumSignificantDigits: 1, roundingMode: 'half-even' }).toString() === '?');
 
 // BigDecimal.cos
 console.assert(BigDecimal.cos(BigDecimal.BigDecimal(1), { maximumSignificantDigits: 16, roundingMode: 'half-even' }).toString() === '0.5403023058681397');
@@ -143,6 +142,7 @@ console.assert(BigDecimal.cos(BigDecimal.BigDecimal(4), { maximumSignificantDigi
 console.assert(BigDecimal.cos(BigDecimal.BigDecimal(0), { maximumSignificantDigits: 16, roundingMode: 'ceil' }).toString() === '1');
 console.assert(BigDecimal.cos(BigDecimal.BigDecimal(0), { maximumSignificantDigits: 16, roundingMode: 'half-even' }).toString() === '1');
 console.assert(BigDecimal.cos(BigDecimal.BigDecimal(0), { maximumSignificantDigits: 16, roundingMode: 'floor' }).toString() === '1');
+console.assert(BigDecimal.cos(BigDecimal.BigDecimal('8e+9'), { maximumSignificantDigits: 9, roundingMode: 'floor' }).toString() === '-0.0930906136'); // bug
 
 // BigDecimal.atan
 console.assert(BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), { maximumSignificantDigits: 16, roundingMode: 'half-even' })).toString() === '3.1415926535897932');
@@ -157,56 +157,6 @@ console.assert(BigDecimal.equal(BigDecimal.atan(BigDecimal.BigDecimal(-2), { max
 
 //BigDecimal2
 
-BigDecimal2.BigDecimal2 = BigDecimal2;
-BigDecimal2.toNumber = function (d) {
-  return Number(d.toString());
-};
-BigDecimal2.unaryMinus = function (d) {
-  return BigDecimal2.sub(BigDecimal2(0), d);
-};
-var wrap = function (f, w) {
-  return function (a, b, rounding) {
-    if (rounding != null) {
-      var abs = function (d) {
-        return d['<'](BigDecimal2(0)) ? BigDecimal2.sub(BigDecimal2(0), d) : d;
-      };
-      var sign = function (d) {
-        return d['<'](BigDecimal2(0)) ? -1 : +1;
-      };
-      var cc = w === '*' || w === '/' ? (a['<'](BigDecimal2.BigDecimal2(0)) ? -1 : +1) * (b['<'](BigDecimal2.BigDecimal2(0)) ? -1 : +1) : (abs(a)['>'](abs(b)) ? sign(a) : sign(b) * (w === '-' ? -1 : +1));
-      var roundingMode = rounding.roundingMode;
-      var mode = roundingMode === 'half-even' ? BigDecimal2.ROUND_HALF_EVEN : (roundingMode === 'ceil' && cc > 0 || roundingMode === 'floor' && cc < 0 ? BigDecimal2.ROUND_UP : BigDecimal2.ROUND_DOWN);
-      rounding = Object.assign({}, rounding, {
-        roundingMode: mode
-      });
-    }
-    return f(a, b, rounding);
-  };
-};
-BigDecimal2.add = wrap(BigDecimal2.add, '+');
-BigDecimal2.subtract = wrap(BigDecimal2.sub, '-');
-BigDecimal2.multiply = wrap(BigDecimal2.mul, '*');
-BigDecimal2.divide = wrap(BigDecimal2.div, '/');
-BigDecimal2.lessThan = function (a, b) {
-  return a['<'](b);
-};
-BigDecimal2.greaterThan = function (a, b) {
-  return a['>'](b);
-};
-BigDecimal2.equal = function (a, b) {
-  return a['=='](b);
-};
-var round = BigDecimal2.round;
-BigDecimal2.round = function (d, rounding) {
-  var cc = d['<'](BigDecimal2(0)) ? -1 : +1;
-  var roundingMode = rounding.roundingMode;
-  var mode = roundingMode === 'half-up' ? BigDecimal2.ROUND_HALF_UP : (roundingMode === 'half-even' ? BigDecimal2.ROUND_HALF_EVEN : (roundingMode === 'ceil' && cc > 0 || roundingMode === 'floor' && cc < 0 ? BigDecimal2.ROUND_UP : BigDecimal2.ROUND_DOWN));
-  rounding = Object.assign({}, rounding, {
-    roundingMode: mode
-  });
-  return round(d, rounding);
-};
-
 // random tests:
 function randomInteger() {
   var max = 10;
@@ -214,23 +164,16 @@ function randomInteger() {
   return Math.floor(Math.random() * (max + min)) - min;
 }
 
-for (var c = 0; c < 10; c += 1) {
+for (var c = 0; c < 1000; c += 1) {
   var aValue = (randomInteger() + 'e+' + randomInteger()).replace(/\+\-/g, '-');
   var bValue = (randomInteger() + 'e+' + randomInteger()).replace(/\+\-/g, '-');
   var a = BigDecimal.BigDecimal(aValue);
   var b = BigDecimal.BigDecimal(bValue);
-  var operations = 'add subtract multiply divide'.split(' ');
+  var operations = 'add subtract multiply divide log exp sin cos atan'.split(' ');
   var operation = operations[(randomInteger() % operations.length + operations.length) % operations.length];
   //var roundingType = randomInteger() % 2 === 0 ? 'maximumSignificantDigits' : 'maximumFractionDigits';
   var roundingType = 'maximumSignificantDigits';
-  try {
-    BigDecimal.round(BigDecimal.BigDecimal('1.5'), { maximumFractionDigits: 1, roundingMode: 'floor' });
-  } catch (error) {
-    if (roundingType === 'maximumFractionDigits') {
-      roundingType = 'maximumSignificantDigits';
-    }
-  }
-  var roundingModes = 'ceil floor half-even'.split(' ');
+  var roundingModes = 'ceil floor half-even half-up half-down'.split(' ');
   var roundingMode = roundingModes[(randomInteger() % roundingModes.length + roundingModes.length) % roundingModes.length];
   var decimalDigits = randomInteger();
   var rounding = {
@@ -239,10 +182,21 @@ for (var c = 0; c < 10; c += 1) {
     maximumFractionDigits: roundingType === 'maximumFractionDigits' ? Math.max(0, decimalDigits) : undefined
   };
   var zero = BigDecimal.BigDecimal('0');
-  if (operation !== 'divide' || !BigDecimal.equal(b, zero)) {
-    var cc = BigDecimal[operation](a, b, rounding);
-    var expected = BigDecimal2[operation](BigDecimal2.BigDecimal2(aValue), BigDecimal2.BigDecimal2(bValue), rounding);
+  if (operation === 'atan') {
+    aValue = '1';
+    a = BigDecimal.BigDecimal(1);
+  }
+  if ((operation !== 'divide' || !BigDecimal.equal(b, zero)) && (operation !== 'log' || BigDecimal.greaterThan(a, zero))) {
+    var cc = /^(log|exp|sin|cos|atan)$/.test(operation) ? BigDecimal[operation](a, rounding) : BigDecimal[operation](a, b, rounding);
+    var expected = /^(log|exp|sin|cos|atan)$/.test(operation) ? BigDecimal2[operation](BigDecimal2.BigDecimal(aValue), rounding) : BigDecimal2[operation](BigDecimal2.BigDecimal(aValue), BigDecimal2.BigDecimal(bValue), rounding);
+    if (cc.exponent > 9000000000000000n) {
+      cc = 'Infinity';
+    }
+    if (cc.exponent < -9000000000000000n) {
+      cc = '0';
+    }
     if (cc.toString() !== expected.toString()) {
+      console.log(cc.toString(), expected.toString());
       throw new Error(c);
     }
   }

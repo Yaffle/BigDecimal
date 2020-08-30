@@ -80,7 +80,7 @@ function naturalLogarithm(n) {
   var s = n.toString(16);
   var p = Math.floor(Math.log((Number.MAX_SAFE_INTEGER + 1) / 32 + 0.5) / Math.log(2));
   var l = Math.floor(p / 4);
-  return Math.log(Number('0x' + s.slice(0, l)) / Math.pow(2, 4 * l)) + 4 * Math.log(2) * s.length;
+  return Math.log(Number("0x" + s.slice(0, l)) / Math.pow(2, 4 * l)) + 4 * Math.log(2) * s.length;
 }
 function digits(a) { // floor(log10(abs(a.significand))) + 1
   var n = bigIntMax(bigIntAbs(a.significand), 1n);
@@ -327,7 +327,7 @@ function abs(a) {
 }
 
 function sign(x) {
-  return BigDecimal.lessThan(x, BigDecimal.BigDecimal(0)) ? BigDecimal.BigDecimal(-1) : (BigDecimal.greaterThan(x, BigDecimal.BigDecimal(0)) ? BigDecimal.BigDecimal(1) : BigDecimal.BigDecimal(0));
+  return BigDecimal.lessThan(x, BigDecimal.BigDecimal(0)) ? BigDecimal.BigDecimal(-1) : (BigDecimal.greaterThan(x, BigDecimal.BigDecimal(0)) ? BigDecimal.BigDecimal(+1) : BigDecimal.BigDecimal(0));
 }
 
 function significandDigits(a) {
@@ -361,6 +361,9 @@ function tryToMakeCorrectlyRounded(specialValue, f, name) {
     var i = 0;
     var error = BigDecimal.BigDecimal(0);
     do {
+      if (i > 4 && rounding.maximumSignificantDigits != null && rounding.roundingMode === "half-even" && name !== "sin" && name !== "cos") {
+        throw new Error();
+      }
       i += 1;
       var internalRounding = {
         maximumSignificantDigits: Math.ceil(Math.max(rounding.maximumSignificantDigits || (rounding.maximumFractionDigits + 1 + getExpectedResultIntegerDigits(x) - 1), significandDigits(x)) * Math.cbrt(Math.pow(2, i - 1))) + 2,
@@ -372,12 +375,9 @@ function tryToMakeCorrectlyRounded(specialValue, f, name) {
       //if (i > 0) {
         //console.log(i, f.name, x + "", result + "", error + "", BigDecimal.round(BigDecimal.subtract(result, error), rounding) + "", BigDecimal.round(BigDecimal.add(result, error), rounding) + "");
       //}
-      if (i > 10 && rounding.maximumSignificantDigits != null) {
-        throw new Error();
-      }
     } while (!BigDecimal.equal(BigDecimal.round(BigDecimal.subtract(result, error), rounding), BigDecimal.round(BigDecimal.add(result, error), rounding)));
     if (i > 1) {
-      console.log(i);
+      //console.debug(i, name);
     }
     return BigDecimal.round(result, rounding);
   };
@@ -389,7 +389,7 @@ function sqrt(x, rounding) {
   var result = BigDecimal.divide(x, BigDecimal.BigDecimal(2));
   while (BigDecimal.lessThan(result, lastResult)) {
     lastResult = result;
-    result = BigDecimal.divide(BigDecimal.add(BigDecimal.divide(BigDecimal.BigDecimal(x), result, rounding), result), BigDecimal.BigDecimal(2), rounding);
+    result = BigDecimal.divide(BigDecimal.add(BigDecimal.divide(x, result, rounding), result), BigDecimal.BigDecimal(2), rounding);
   }
   return result;
 }
@@ -417,7 +417,7 @@ BigDecimal.log = tryToMakeCorrectlyRounded(1, function log(x, rounding) {
       f = BigDecimal.multiply(f, BigDecimal.BigDecimal(10));
     }
     if (k !== 0n) {
-      return BigDecimal.add(BigDecimal.log(f, internalRounding), BigDecimal.multiply(BigDecimal.BigDecimal(2n * k), BigDecimal.log(BigDecimal.BigDecimal(sqrt(BigDecimal.BigDecimal(10), internalRounding)), internalRounding)));
+      return BigDecimal.add(BigDecimal.log(f, internalRounding), BigDecimal.multiply(BigDecimal.BigDecimal(2n * k), BigDecimal.log(sqrt(BigDecimal.BigDecimal(10), internalRounding), internalRounding)));
     }
   }
   //! log(x) = log((1 + g) / (1 - g)) = 2*(g + g**3/3 + g**5/5 + ...)
@@ -441,13 +441,15 @@ BigDecimal.log = tryToMakeCorrectlyRounded(1, function log(x, rounding) {
 BigDecimal.exp = tryToMakeCorrectlyRounded(0, function exp(x, rounding) {
   //! k = round(x / ln(10));
   //! exp(x) = exp(x - k * ln(10) + k * ln(10)) = exp(x - k * ln(10)) * 10**k
-  var k = BigDecimal.divide(x, BigDecimal.BigDecimal(BigDecimal.divide(BigDecimal.BigDecimal(2302585092994046), BigDecimal.BigDecimal(1000000000000000))), {maximumFractionDigits: 0, roundingMode: "half-even"});
+  var k = BigDecimal.divide(x, BigDecimal.divide(BigDecimal.BigDecimal(2302585092994046), BigDecimal.BigDecimal(1000000000000000)), {maximumFractionDigits: 0, roundingMode: "half-even"});
   var internalRounding = {
     maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log(rounding.maximumSignificantDigits + 0.5) / Math.log(10)),
     roundingMode: "half-even"
   };
   if (!BigDecimal.equal(k, BigDecimal.BigDecimal(0))) {
-    var r = BigDecimal.subtract(x, BigDecimal.multiply(k, BigDecimal.log(BigDecimal.BigDecimal(10), {maximumSignificantDigits: internalRounding.maximumSignificantDigits + Number(getCountOfDigits(k)), roundingMode: "half-even"})));
+    var log10 = BigDecimal.log(BigDecimal.BigDecimal(10), {maximumSignificantDigits: internalRounding.maximumSignificantDigits + Number(getCountOfDigits(k)), roundingMode: "half-even"});
+    k = BigDecimal.divide(x, log10, {maximumFractionDigits: 0, roundingMode: "half-even"});
+    var r = BigDecimal.subtract(x, BigDecimal.multiply(k, log10));
     return BigDecimal.multiply(BigDecimal.exp(r, internalRounding), exponentiate(BigDecimal.BigDecimal(10), BigDecimal.toBigInt(k)));
   }
   // https://en.wikipedia.org/wiki/Exponential_function#Computation
@@ -470,7 +472,7 @@ function divideByHalfOfPI(x, rounding) { // x = k*pi/2 + r + 2*pi*n, where |r| <
     throw new RangeError();
   }
   if (BigDecimal.greaterThan(x, BigDecimal.divide(BigDecimal.BigDecimal(785398163397448), BigDecimal.BigDecimal(1000000000000000)))) {
-    var halfOfPi = BigDecimal.multiply(BigDecimal.BigDecimal(2), BigDecimal.atan(BigDecimal.BigDecimal(1), {maximumSignificantDigits: rounding.maximumSignificantDigits + Number(getCountOfDigits(x)), roundingMode: "half-even"}));
+    var halfOfPi = BigDecimal.multiply(BigDecimal.BigDecimal(2), BigDecimal.atan(BigDecimal.BigDecimal(1), {maximumSignificantDigits: rounding.maximumSignificantDigits + Number(getCountOfDigits(x)) + 1, roundingMode: "half-even"}));
     var i = BigDecimal.divide(x, halfOfPi, {maximumFractionDigits: 0, roundingMode: "half-even"});
     var remainder = BigDecimal.subtract(x, BigDecimal.multiply(i, halfOfPi));
     return {remainder: remainder, k: (Number(BigDecimal.toBigInt(i) % 4n) + 4) % 4};
@@ -511,7 +513,7 @@ BigDecimal.sin = tryToMakeCorrectlyRounded(0, function (x, rounding) {
     sum = BigDecimal.add(sum, term, internalRounding);
   }
   return BigDecimal.multiply(a, sum);
-});
+}, "sin");
 
 BigDecimal.cos = tryToMakeCorrectlyRounded(0, function (x, rounding) {
   if (BigDecimal.lessThan(x, BigDecimal.BigDecimal(0))) {
@@ -546,14 +548,14 @@ BigDecimal.cos = tryToMakeCorrectlyRounded(0, function (x, rounding) {
     sum = BigDecimal.add(sum, term, internalRounding);
   }
   return sum;
-});
+}, "cos");
 
 BigDecimal.atan = tryToMakeCorrectlyRounded(0, function (x, rounding) {
   if (BigDecimal.greaterThan(abs(x), BigDecimal.BigDecimal(1))) {
     var halfOfPi = BigDecimal.multiply(BigDecimal.atan(BigDecimal.BigDecimal(1), rounding), BigDecimal.BigDecimal(2));
     return BigDecimal.multiply(sign(x), BigDecimal.subtract(halfOfPi, BigDecimal.atan(BigDecimal.divide(BigDecimal.BigDecimal(1), abs(x), rounding), rounding)));
   }
-  // https://en.wikipedia.org/wiki/Inverse_trigonometric_functions#Infinite_series
+  // https://en.wikipedia.org/wiki/Inverse_trigonometric_functions#:~:text=Alternatively,%20this%20can%20be%20expressed%20as
   var internalRounding = {
     maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log(rounding.maximumSignificantDigits + 0.5) / Math.log(10)),
     roundingMode: "half-even"
@@ -564,14 +566,14 @@ BigDecimal.atan = tryToMakeCorrectlyRounded(0, function (x, rounding) {
   var lastSum = BigDecimal.BigDecimal(0);
   while (!BigDecimal.equal(lastSum, sum)) {
     n += 1;
-    term = BigDecimal.multiply(term, BigDecimal.BigDecimal((2 * n) * (2 * n)));
-    term = BigDecimal.divide(term, BigDecimal.BigDecimal((2 * n) * (2 * n + 1)), internalRounding);
+    term = BigDecimal.multiply(term, BigDecimal.BigDecimal(2 * n));
+    term = BigDecimal.divide(term, BigDecimal.BigDecimal(2 * n + 1), internalRounding);
     term = BigDecimal.multiply(term, BigDecimal.multiply(x, x));
     term = BigDecimal.divide(term, BigDecimal.add(BigDecimal.BigDecimal(1), BigDecimal.multiply(x, x)), internalRounding);
     lastSum = sum;
     sum = BigDecimal.add(sum, term, internalRounding);
   }
   return BigDecimal.multiply(x, sum);
-});
+}, "atan");
 
 export default BigDecimal;
