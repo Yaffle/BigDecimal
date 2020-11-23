@@ -18,6 +18,12 @@ It can be compiled using https://www.npmjs.com/package/babel-plugin-transform-bi
 
 `a.toString()`
 
+`a.toFixed(fractionDigits)`
+
+`a.toPrecision(precision)`
+
+`a.toExponential(fractionDigits)`
+
 `BigDecimal.toBigInt(a)` (not in the spec)
 
 `BigDecimal.toNumber(a)` (not in the spec, only integers)
@@ -59,10 +65,13 @@ It can be compiled using https://www.npmjs.com/package/babel-plugin-transform-bi
 
 The `rounding` argument may look like `{maximumFractionDigits: 10, roundingMode: "half-even"}` or `{maximumSignificantDigits: 10, roundingMode: "half-even"}`, where the roundingMode can be "floor", or "ceil", or "half-even", or "half-up".
 
+# BigFloat
+Similar to BigDecimal, but uses base 2.
+
 ## Example:
 ```javascript
 
-import BigDecimal from './node_modules/@yaffle/bigdecimal/BigDecimal.js';
+import {BigDecimal} from './node_modules/@yaffle/bigdecimal/BigDecimal.js';
 
 var pi = BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), {maximumSignificantDigits: 1000, roundingMode: 'half-even'}));
 

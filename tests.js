@@ -1,6 +1,6 @@
 
 import BigDecimal2 from './BigDecimalByDecimal.js.js';
-import BigDecimal from './BigDecimal.js';
+import {BigDecimal, BigFloat} from './BigDecimal.js';
 
 console.time();
 
@@ -97,6 +97,35 @@ console.assert(BigDecimal.BigDecimal('0.000001').toString() === '0.000001');
 console.assert(BigDecimal.BigDecimal('0.00000012').toString() === '1.2e-7');
 console.assert(BigDecimal.BigDecimal(-1).toString() === '-1');
 console.assert(BigDecimal.BigDecimal('1e+21').toString() === '1e+21');
+
+// toExponential
+//console.assert(BigDecimal.BigDecimal(' +1.2e+3 ').toExponential() === '1.2e+3');
+console.assert(BigDecimal.BigDecimal('1.5').toExponential(0) === '2e+0');
+console.assert(BigDecimal.BigDecimal('2.5').toExponential(0) === '3e+0');
+console.assert(BigDecimal.BigDecimal('-1.5').toExponential(0) === '-2e+0');
+console.assert(BigDecimal.BigDecimal('-2.5').toExponential(0) === '-3e+0');
+console.assert(BigDecimal.BigDecimal('1.5').toExponential(1) === '1.5e+0');
+console.assert(BigDecimal.BigDecimal('1234567890').toExponential(3) === '1.235e+9');
+
+// toPrecision
+console.assert(BigDecimal.BigDecimal('-1.5').toPrecision(1) === '-2');
+console.assert(BigDecimal.BigDecimal('-1e-7').toPrecision(2) === '-1.0e-7');
+console.assert(BigDecimal.BigDecimal('-1e-6').toPrecision(2) === '-0.0000010');
+console.assert(BigDecimal.BigDecimal('-1.5').toPrecision(3) === '-1.50');
+console.assert(BigDecimal.BigDecimal('95e-8').toPrecision(1) === '0.000001');
+console.assert(BigDecimal.BigDecimal('94e-8').toPrecision(1) === '9e-7');
+
+// toFixed
+console.assert(BigDecimal.BigDecimal('-1.5').toFixed(0) === '-2');
+console.assert(BigDecimal.BigDecimal('-1.5').toFixed(1) === '-1.5');
+console.assert(BigDecimal.BigDecimal('-1.5').toFixed(2) === '-1.50');
+console.assert(BigDecimal.BigDecimal('1.5e+1').toFixed(2) === '15.00');
+console.assert(BigDecimal.BigDecimal('5e-1').toFixed(0) === '1');
+console.assert(BigDecimal.BigDecimal('0').toFixed(0) === '0');
+console.assert(BigDecimal.BigDecimal('999999999999999999999.4').toFixed(0) === '999999999999999999999');
+console.assert(BigDecimal.BigDecimal('999999999999999999999.5').toFixed(0) === '1e+21'); //TODO: not specified (!)
+console.assert(BigDecimal.BigDecimal('1e+21').toFixed(0) === '1e+21');
+console.assert(BigDecimal.BigDecimal('-1e-100').toFixed(10) === '-0.0000000000');
 
 // BigDecimal.log
 console.assert(BigDecimal.log(BigDecimal.BigDecimal(10), { maximumSignificantDigits: 16, roundingMode: 'half-even' }).toString() === '2.302585092994046');
@@ -291,3 +320,9 @@ console.time('1000 digits of ln(2)');
 var e = BigDecimal.log(BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1000, roundingMode: 'half-even' });
 console.timeEnd('1000 digits of ln(2)');
 console.log(e.toString());
+
+console.time('1000 digits of ln(2) using BigFloat');
+var e = BigFloat.log(BigFloat.BigFloat(2), { maximumSignificantDigits: Math.ceil(1000 * Math.log2(10)), roundingMode: 'half-even' });
+console.timeEnd('1000 digits of ln(2) using BigFloat');
+console.log(e.toFixed(1000));
+globalThis.BigFloat = BigFloat;
