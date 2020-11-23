@@ -85,23 +85,18 @@ function bigIntBitLength(n) {
   // https://github.com/tc39/proposal-bigint/issues/205
   return n.toString(16).length * 4 + 4;
 }
+function bigIntLog2(n) {
+  var k = bigIntBitLength(n) - Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1));
+  var leadingDigits = Number(n >> BigInt(k));
+  return Math.log2(leadingDigits) + k;
+}
 function digits(a) { // floor(log(abs(a.significand)) / log(BASE)) + 1
   var n = bigIntMax(bigIntAbs(a.significand), 1n);
   var number = Number(n);
   if (number < (Number.MAX_SAFE_INTEGER + 1) / 16) {
-    return Math.floor(Math.log(number + 0.5) / Math.log(BASE)) + 1;
+    return Math.floor(Math.log2(number + 0.5) / Math.log2(BASE)) + 1;
   }
-  if (number < 1 / 0) {
-    var e = Math.log(number) / Math.log(BASE);
-    if (Math.floor(e * (1 + 2 / (Number.MAX_SAFE_INTEGER + 1))) < e) {
-      return Math.floor(e) + 1;
-    }
-    var i = Math.floor(e + 0.5);
-    return n >= BigInt(BASE)**BigInt(i) ? i + 1 : i;
-  }
-  var k = bigIntBitLength(n) - Math.floor(Math.log(Number.MAX_SAFE_INTEGER + 1) / Math.log(2));
-  var leadingDigits = Number(n >> BigInt(k));
-  var e = (Math.log(leadingDigits) + k * Math.log(2)) / Math.log(BASE);
+  var e = (number < 1 / 0 ? Math.log2(number) : bigIntLog2(n)) / Math.log2(BASE);
   if (Math.floor(e * (1 - 32 / (Number.MAX_SAFE_INTEGER + 1))) === Math.floor(e) &&
       Math.floor(e * (1 + 32 / (Number.MAX_SAFE_INTEGER + 1))) === Math.floor(e)) {
     return Math.floor(e) + 1;
@@ -226,7 +221,7 @@ BigDecimal.divide = function (a, b, rounding) {
     scaling = BigInt(rounding.maximumFractionDigits) + exponent;
   } else {
     // Try to do exact division:
-    scaling = BigInt(Math.ceil(digits(b) / (Math.log(2) / Math.log(BASE)) + 1));
+    scaling = BigInt(Math.ceil(digits(b) * Math.log2(BASE)) + 1);
   }
   var dividend = (scaling > 0n ? BigInt(BASE)**scaling : 1n) * a.significand;
   var divisor = (scaling < 0n ? BigInt(BASE)**(-scaling) : 1n) * b.significand;
@@ -409,6 +404,7 @@ var getDecimalSignificantAndExponent = function (value, precision) {
       fd += precision;
       x = BigDecimal.multiply(BigDecimal.BigDecimal(10n**BigInt(precision - 1)), x, rounding);
       var error = BigDecimal.multiply(BigDecimal.multiply(BigDecimal.BigDecimal(Math.abs(fd) + precision), BigDecimal.divide(BigDecimal.BigDecimal(1), exponentiate(BigDecimal.BigDecimal(BASE), rounding.maximumSignificantDigits))), x);
+      //TODO: ?
       if (rounding.maximumSignificantDigits > (Math.abs(fd) + precision) * Math.log2(10) || BigDecimal.equal(roundToInteger(BigDecimal.add(x, error)), roundToInteger(BigDecimal.subtract(x, error)))) {
       result = BigDecimal.toBigInt(roundToInteger(x)).toString();
       }
@@ -485,7 +481,7 @@ function tryToMakeCorrectlyRounded(specialValue, f, name) {
     if (name === "log") {
       // log(x) <= BASE**k
       // log(log(x))/log(BASE) <= k
-      return Math.ceil(Math.log(Math.ceil(Math.max(Number(getCountOfDigits(x)), 1) * Math.log(BASE))) / Math.log(BASE));
+      return Math.ceil(Math.log2(Math.ceil(Math.max(Number(getCountOfDigits(x)), 1) * Math.log(BASE))) / Math.log2(BASE));
     }
     return 1;
   }
@@ -537,7 +533,7 @@ BigDecimal.log = tryToMakeCorrectlyRounded(1, function log(x, rounding) {
   }
   // https://ru.wikipedia.org/wiki/Логарифм#Разложение_в_ряд_и_вычисление_натурального_логарифма
   var internalRounding = {
-    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log(rounding.maximumSignificantDigits + 0.5) / Math.log(BASE)),
+    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log2(rounding.maximumSignificantDigits + 0.5) / Math.log2(BASE)),
     roundingMode: "half-even"
   };
   if (true) {
@@ -579,7 +575,7 @@ BigDecimal.exp = tryToMakeCorrectlyRounded(0, function exp(x, rounding) {
   //! k = round(x / ln(BASE));
   //! exp(x) = exp(x - k * ln(BASE) + k * ln(BASE)) = exp(x - k * ln(BASE)) * BASE**k
   var internalRounding = {
-    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log(rounding.maximumSignificantDigits + 0.5) / Math.log(BASE)),
+    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log2(rounding.maximumSignificantDigits + 0.5) / Math.log2(BASE)),
     roundingMode: "half-even"
   };
   if (!BigDecimal.equal(x, BigDecimal.BigDecimal(0))) {
@@ -638,7 +634,7 @@ BigDecimal.sin = tryToMakeCorrectlyRounded(0, function (x, rounding) {
   }
   // https://en.wikipedia.org/wiki/Lookup_table#Computing_sines
   var internalRounding = {
-    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log(rounding.maximumSignificantDigits + 0.5) / Math.log(BASE)),
+    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log2(rounding.maximumSignificantDigits + 0.5) / Math.log2(BASE)),
     roundingMode: "half-even"
   };
   var n = 1;
@@ -673,7 +669,7 @@ BigDecimal.cos = tryToMakeCorrectlyRounded(0, function (x, rounding) {
   }
   // https://en.wikipedia.org/wiki/Trigonometric_functions#Power_series_expansion
   var internalRounding = {
-    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log(rounding.maximumSignificantDigits + 0.5) / Math.log(BASE)),
+    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log2(rounding.maximumSignificantDigits + 0.5) / Math.log2(BASE)),
     roundingMode: "half-even"
   };
   var n = 0;
@@ -697,7 +693,7 @@ BigDecimal.atan = tryToMakeCorrectlyRounded(0, function (x, rounding) {
   }
   // https://en.wikipedia.org/wiki/Inverse_trigonometric_functions#:~:text=Alternatively,%20this%20can%20be%20expressed%20as
   var internalRounding = {
-    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log(rounding.maximumSignificantDigits + 0.5) / Math.log(BASE)),
+    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log2(rounding.maximumSignificantDigits + 0.5) / Math.log2(BASE)),
     roundingMode: "half-even"
   };
   var n = 0;

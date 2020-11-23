@@ -172,6 +172,7 @@ console.assert(BigDecimal.cos(BigDecimal.BigDecimal(0), { maximumSignificantDigi
 console.assert(BigDecimal.cos(BigDecimal.BigDecimal(0), { maximumSignificantDigits: 16, roundingMode: 'half-even' }).toString() === '1');
 console.assert(BigDecimal.cos(BigDecimal.BigDecimal(0), { maximumSignificantDigits: 16, roundingMode: 'floor' }).toString() === '1');
 console.assert(BigDecimal.cos(BigDecimal.BigDecimal('8e+9'), { maximumSignificantDigits: 9, roundingMode: 'floor' }).toString() === '-0.0930906136'); // bug
+console.assert(BigDecimal.cos(BigDecimal.BigDecimal('-10e-9'), {maximumSignificantDigits: 1, roundingMode: 'floor'}).toString() === '0.9');
 
 // BigDecimal.atan
 console.assert(BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), { maximumSignificantDigits: 16, roundingMode: 'half-even' })).toString() === '3.1415926535897932');
