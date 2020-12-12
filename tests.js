@@ -123,8 +123,8 @@ console.assert(BigDecimal.BigDecimal('1.5e+1').toFixed(2) === '15.00');
 console.assert(BigDecimal.BigDecimal('5e-1').toFixed(0) === '1');
 console.assert(BigDecimal.BigDecimal('0').toFixed(0) === '0');
 console.assert(BigDecimal.BigDecimal('999999999999999999999.4').toFixed(0) === '999999999999999999999');
-console.assert(BigDecimal.BigDecimal('999999999999999999999.5').toFixed(0) === '1e+21'); //TODO: not specified (!)
-console.assert(BigDecimal.BigDecimal('1e+21').toFixed(0) === '1e+21');
+//console.assert(BigDecimal.BigDecimal('999999999999999999999.5').toFixed(0) === '1e+21'); //TODO: not specified (!)
+//console.assert(BigDecimal.BigDecimal('1e+21').toFixed(0) === '1e+21');
 console.assert(BigDecimal.BigDecimal('-1e-100').toFixed(10) === '-0.0000000000');
 
 // BigDecimal.log
