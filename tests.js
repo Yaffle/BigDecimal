@@ -188,24 +188,19 @@ console.assert(BigDecimal.equal(BigDecimal.atan(BigDecimal.BigDecimal(-2), { max
 //BigDecimal2
 
 // random tests:
-function randomInteger() {
-  var max = 10;
-  var min = 10;
-  return Math.floor(Math.random() * (max + min)) - min;
-}
 
 for (var c = 0; c < 1000; c += 1) {
-  var aValue = (randomInteger() + 'e+' + randomInteger()).replace(/\+\-/g, '-');
-  var bValue = (randomInteger() + 'e+' + randomInteger()).replace(/\+\-/g, '-');
+  var aValue = ((1 + Math.random()) + 'e+' + (Math.floor(Math.random() * 20) - 10)).replace(/\+\-/g, '-');
+  var bValue = ((1 + Math.random()) + 'e+' + (Math.floor(Math.random() * 20) - 10)).replace(/\+\-/g, '-');
   var a = BigDecimal.BigDecimal(aValue);
   var b = BigDecimal.BigDecimal(bValue);
   var operations = 'add subtract multiply divide log exp sin cos atan'.split(' ');
-  var operation = operations[(randomInteger() % operations.length + operations.length) % operations.length];
-  //var roundingType = randomInteger() % 2 === 0 ? 'maximumSignificantDigits' : 'maximumFractionDigits';
+  var operation = operations[Math.floor(Math.random() * operations.length)];
+  //var roundingType = Math.random() < 0.5 ? 'maximumSignificantDigits' : 'maximumFractionDigits';
   var roundingType = 'maximumSignificantDigits';
   var roundingModes = 'ceil floor half-even half-up half-down'.split(' ');
-  var roundingMode = roundingModes[(randomInteger() % roundingModes.length + roundingModes.length) % roundingModes.length];
-  var decimalDigits = randomInteger();
+  var roundingMode = roundingModes[Math.floor(Math.random() * roundingModes.length)];
+  var decimalDigits = Math.floor(Math.random() * 20);
   var rounding = {
     roundingMode: roundingMode,
     maximumSignificantDigits: roundingType === 'maximumSignificantDigits' ? Math.max(1, decimalDigits) : undefined,
@@ -236,27 +231,28 @@ function random(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-for (var c = 0; c < 1000; c += 1) {
+function randomNumber() {
   var significand = 1 + Math.random() * 0.5;
   var exponent = random(-1022, 1023);
   var sign = Math.random() < 0.5 ? -1 : +1;
   var value = sign * significand * Math.pow(2, exponent);
-  var number = Number(value);
-  var bigdecimal = BigDecimal.divide(BigDecimal.BigDecimal(significand * 2**52), BigDecimal.BigDecimal(2**52), { maximumSignificantDigits: 1000, roundingMode: 'ceil' });
-  if (exponent >= 0) {
-    bigdecimal = BigDecimal.multiply(bigdecimal, BigDecimal.BigDecimal(2**exponent));
-  } else {
-    bigdecimal = BigDecimal.divide(bigdecimal, BigDecimal.BigDecimal(2**-exponent), { maximumSignificantDigits: 1000, roundingMode: 'ceil' });
+  return Math.sign(value) * Math.max(Math.min(Math.abs(value), Number.MAX_VALUE), 2**-1022);
+}
+
+function bigdecimalFromNumber(number) {
+  var exponent = Math.floor(Math.log2(Math.abs(number)));
+  if (Math.abs(number) < 2**exponent) {
+    exponent -= 1;
   }
-  bigdecimal = BigDecimal.multiply(bigdecimal, BigDecimal.BigDecimal(sign))
-  if (Math.abs(number) < 2**-1022) {
-    number = sign * 2**-1022;
-    bigdecimal = BigDecimal.divide(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(1 / number));
-  }
-  if (Math.abs(number) === 1 / 0) {
-    number = sign * Number.MAX_VALUE;
-    bigdecimal = BigDecimal.BigDecimal(number);
-  }
+  const sign = BigDecimal.BigDecimal(Math.sign(number));
+  const decimal = BigDecimal.divide(BigDecimal.BigDecimal(Math.abs(number) / 2**exponent * (Number.MAX_SAFE_INTEGER + 1) / 2), BigDecimal.BigDecimal((Number.MAX_SAFE_INTEGER + 1) / 2));
+  const scale = exponent >= 0 ? BigDecimal.BigDecimal(2**exponent) : BigDecimal.divide(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(2**-exponent));
+  return BigDecimal.multiply(sign, BigDecimal.multiply(decimal, scale));
+}
+
+for (var c = 0; c < 1000; c += 1) {
+  var number = randomNumber();
+  var bigdecimal = bigdecimalFromNumber(number);
   // https://github.com/tc39/ecma402/issues/128
   var maxFraction = random(0, 20);
   var minFraction = random(0, 20);
@@ -327,3 +323,72 @@ var e = BigFloat.log(BigFloat.BigFloat(2), { maximumSignificantDigits: Math.ceil
 console.timeEnd('1000 digits of ln(2) using BigFloat');
 console.log(e.toFixed(1000));
 globalThis.BigFloat = BigFloat;
+
+console.assert(BigFloat.divide(BigFloat.BigFloat(49151), BigFloat.BigFloat(2**15)).toPrecision(1) === '1');
+console.assert(BigFloat.divide(BigFloat.BigFloat(13835058055282163711n), BigFloat.BigFloat(2n**63n)).toPrecision(1) === '1');
+console.assert(BigFloat.BigFloat(1).toPrecision(101) === '1.' + '0'.repeat(100));
+console.assert(bigfloatFromNumber(46892389.03583745).toPrecision(34) === '46892389.03583744913339614868164063');
+
+function bigfloatFromNumber(number) {
+  var exponent = Math.floor(Math.log2(Math.abs(number)));
+  if (Math.abs(number) < 2**exponent) {
+    exponent -= 1;
+  }
+  const sign = BigFloat.BigFloat(Math.sign(number));
+  const decimal = BigFloat.divide(BigFloat.BigFloat(Math.abs(number) / 2**exponent * (Number.MAX_SAFE_INTEGER + 1) / 2), BigFloat.BigFloat((Number.MAX_SAFE_INTEGER + 1) / 2));
+  const scale = exponent >= 0 ? BigFloat.BigFloat(2**exponent) : BigFloat.divide(BigFloat.BigFloat(1), BigFloat.BigFloat(2**-exponent));
+  return BigFloat.multiply(sign, BigFloat.multiply(decimal, scale));
+}
+
+for (var c = 0; c < 1000; c += 1) {
+  var number = randomNumber();
+  var bigfloat = bigfloatFromNumber(number);
+  var n = random(0, 100);
+  if (Math.abs(number) <= 999999999999999868928) {
+    console.assert(bigfloat.toFixed(n) === number.toFixed(n), bigfloat.toFixed(n), number.toFixed(n));
+  }
+  console.assert(bigfloat.toExponential(n) === number.toExponential(n), number, n, bigfloat.toExponential(n), number.toExponential(n));
+  console.assert(bigfloat.toPrecision(Math.min(n + 1, 100)) === number.toPrecision(Math.min(n + 1, 100)), number);
+}
+
+var roundNumber = function (number, precision) {
+  var v = number * 2**(53-precision);
+  return v - (v - number);//?
+};
+
+console.time();
+for (var c = 0; c < 1000; c += 1) {
+  var number = roundNumber(randomNumber(), 18);
+  //var number = 2;
+  //var number = -2.05986225550976e+168;
+  //var number = Number.MAX_VALUE;
+  //debugger;
+  if (number !== 0 && !Number.isNaN(number)) {
+    var bigfloat = bigfloatFromNumber(number);
+    var f = "sin cos atan exp log".split(" ")[Math.floor(Math.random() * 5)];
+    //f = "cos";
+    var value = Math[f](number);
+    if (Math.abs(value) > 0 && Math.abs(value) < 1/0) {
+      if (f !== "log" || number > 0) {
+        var n = 20;
+        var a = BigFloat[f](bigfloat, {maximumSignificantDigits: 18, roundingMode: 'half-even'}).toPrecision(n);
+        var b = roundNumber(value, 18).toPrecision(n);
+        console.assert(a === b, number, f, a, b);
+      }
+    }
+  }
+}
+console.timeEnd();
+
+console.time();
+var s = 0;
+for (var i = 0; i < 1000; i += 1) {
+  s += Math.cos(Number(BigInt(i)));
+  console.assert(s.toPrecision(20).length > 1);
+}
+console.timeEnd();
+console.log(s);
+
+globalThis.randomNumber = randomNumber;
+globalThis.bigfloatFromNumber = bigfloatFromNumber;
+globalThis.roundNumber = roundNumber;
