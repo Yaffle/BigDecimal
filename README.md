@@ -71,13 +71,20 @@ Similar to BigDecimal, but uses base 2.
 ## Example:
 ```javascript
 
-import {BigDecimal} from './node_modules/@yaffle/bigdecimal/BigDecimal.js';
+import {BigDecimal} from "./node_modules/@yaffle/bigdecimal/BigDecimal.js";
 
-var pi = BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), {maximumSignificantDigits: 1000, roundingMode: 'half-even'}));
+var pi = BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), {maximumSignificantDigits: 1000, roundingMode: "half-even"}));
 
 console.log(pi.toString());
 
 ```
+
+# Note:
+Consider to use only "half-even" rounding mode and rounding to a maximum number of significant digits for floating-point arithmetic,
+or only "floor" rounding to a maximum number of fraction digits for fixed-point arithmetic.
+BigFloat may have better performance.
+Use to round to an integer `BigDecimal.round(a, {maximumFractionDigits: 0, roundingMode: "half-even"})`.
+
 
 # Similar projects:
 1. https://github.com/MikeMcl/decimal.js/

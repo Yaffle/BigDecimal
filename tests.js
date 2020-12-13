@@ -365,11 +365,11 @@ for (var c = 0; c < 1000; c += 1) {
   //debugger;
   if (number !== 0 && !Number.isNaN(number)) {
     var bigfloat = bigfloatFromNumber(number);
-    var f = "sin cos atan exp log".split(" ")[Math.floor(Math.random() * 5)];
-    //f = "cos";
+    var f = 'sin cos atan exp log'.split(' ')[Math.floor(Math.random() * 5)];
+    //f = 'cos';
     var value = Math[f](number);
     if (Math.abs(value) > 0 && Math.abs(value) < 1/0) {
-      if (f !== "log" || number > 0) {
+      if (f !== 'log' || number > 0) {
         var n = 20;
         var a = BigFloat[f](bigfloat, {maximumSignificantDigits: 18, roundingMode: 'half-even'}).toPrecision(n);
         var b = roundNumber(value, 18).toPrecision(n);

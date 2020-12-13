@@ -23,7 +23,7 @@ function rm(roundingMode) {
 function setRounding(rounding) {
   if (rounding != null) {
     if (rounding.maximumFractionDigits != undefined) {
-      throw new RangeError("rounding to maximumFractionDigits is not supported");
+      throw new RangeError('rounding to maximumFractionDigits is not supported');
     }
     Decimal.precision = rounding.maximumSignificantDigits;
     Decimal.rounding = rm(rounding.roundingMode);

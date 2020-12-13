@@ -25,8 +25,10 @@
 // BigDecimal.sin(a, rounding)
 // BigDecimal.cos(a, rounding)
 // BigDecimal.atan(a, rounding)
-// (!) Note: consider using only 'half-even' rounding mode and rounding to a maximum number of significant digits,
-// use to round to an integer use `BigDecimal.round(a, {maximumFractionDigits: 0, roundingMode: 'half-even'})`.
+// (!) Note: consider to use only "half-even" rounding mode and rounding to a maximum number of significant digits for floating-point arithmetic,
+// or only "floor" rounding to a maximum number of fraction digits for fixed-point arithmetic.
+// BigFloat may have better performance.
+// Use to round to an integer `BigDecimal.round(a, {maximumFractionDigits: 0, roundingMode: "half-even"})`.
 
 
 var factory = function (BASE) {
@@ -379,12 +381,12 @@ BigDecimal.prototype.toString = function () {
 };
 
 var roundToInteger = function (a) {
-  var rint = BigDecimal.round(a, {maximumFractionDigits: 0, roundingMode: 'half-even'});
+  var rint = BigDecimal.round(a, {maximumFractionDigits: 0, roundingMode: "half-even"});
   return !BigDecimal.lessThan(BigDecimal.multiply(BigDecimal.subtract(a, rint), BigDecimal.BigDecimal(2)), BigDecimal.BigDecimal(1)) ? BigDecimal.add(rint, BigDecimal.BigDecimal(1)) : rint;
 };
 var bigDecimalToPlainString = function (significand, exponent, minFraction, minSignificant) {
   let e = exponent + significand.length - 1;
-  significand = significand.replace(/0+$/g, '');
+  significand = significand.replace(/0+$/g, "");
   var zeros = Math.max(0, Math.max(e + 1, minSignificant) - significand.length);
   if (e <= -1) {
     significand = "0".repeat(0 - e) + significand;
@@ -398,7 +400,7 @@ var bigDecimalToPlainString = function (significand, exponent, minFraction, minS
 var toPrecision = function (significand, exponent, minSignificant) {
   const e = exponent + BigInt(significand.length - 1);
   if (e < -6 || e >= minSignificant) {
-    return bigDecimalToPlainString(significand, -(significand.length - 1), 0, minSignificant) + 'e' + (e < 0 ? '-' : '+') + bigIntAbs(e).toString();
+    return bigDecimalToPlainString(significand, -(significand.length - 1), 0, minSignificant) + "e" + (e < 0 ? "-" : "+") + bigIntAbs(e).toString();
   }
   return bigDecimalToPlainString(significand, Number(exponent), 0, minSignificant);
 };
@@ -407,12 +409,12 @@ var toFixed = function (significand, exponent, minFraction) {
 };
 var toExponential = function (significand, exponent, minFraction) {
   const e = exponent + BigInt(significand.length - 1);
-  return bigDecimalToPlainString(significand, -(significand.length - 1), 0, minFraction + 1) + 'e' + (e < 0 ? '-' : '+') + bigIntAbs(e).toString();
+  return bigDecimalToPlainString(significand, -(significand.length - 1), 0, minFraction + 1) + "e" + (e < 0 ? "-" : "+") + bigIntAbs(e).toString();
 };
 
 BigDecimal.prototype.toFixed = function (fractionDigits) {
   var value = BigDecimal.multiply(this, BigDecimal.BigDecimal(10n**BigInt(fractionDigits)));
-  var sign = BigDecimal.lessThan(value, BigDecimal.BigDecimal(0)) ? '-' : '';
+  var sign = BigDecimal.lessThan(value, BigDecimal.BigDecimal(0)) ? "-" : "";
   value = roundToInteger(abs(value));
   return sign + toFixed(BigDecimal.toBigInt(value).toString(), -fractionDigits, fractionDigits);
 };
@@ -463,9 +465,9 @@ var getDecimalSignificantAndExponent = function (value, precision) {
     return lg + log10Approximate(BigDecimal.divide(x, exponentiate(ten, lg), rounding));
   };
   if (BigDecimal.equal(value, BigDecimal.BigDecimal(0))) {
-    return {significand: '0', exponent: 0n};
+    return {significand: "0", exponent: 0n};
   }
-  var rounding = {maximumSignificantDigits: 8, roundingMode: 'half-even'};
+  var rounding = {maximumSignificantDigits: 8, roundingMode: "half-even"};
   var result = undefined;
   var fd = 0;
   do {
@@ -501,19 +503,19 @@ var getDecimalSignificantAndExponent = function (value, precision) {
       result = BigDecimal.toBigInt(roundToInteger(x)).toString();
       }
     }
-    rounding = {maximumSignificantDigits: rounding.maximumSignificantDigits * 2, roundingMode: 'half-even'};
+    rounding = {maximumSignificantDigits: rounding.maximumSignificantDigits * 2, roundingMode: "half-even"};
   } while (result == undefined);
   return {significand: result, exponent: -fd};
 };
 
 BigDecimal.prototype.toPrecision = function (precision) {
   var tmp = getDecimalSignificantAndExponent(abs(this), precision);
-  return (BigDecimal.lessThan(this, BigDecimal.BigDecimal(0)) ? '-' : '') + toPrecision(tmp.significand, tmp.exponent, precision);
+  return (BigDecimal.lessThan(this, BigDecimal.BigDecimal(0)) ? "-" : "") + toPrecision(tmp.significand, tmp.exponent, precision);
 };
 
 BigDecimal.prototype.toExponential = function (fractionDigits) {
   var tmp = getDecimalSignificantAndExponent(abs(this), fractionDigits + 1);
-  return (BigDecimal.lessThan(this, BigDecimal.BigDecimal(0)) ? '-' : '') + toExponential(tmp.significand, tmp.exponent, fractionDigits);
+  return (BigDecimal.lessThan(this, BigDecimal.BigDecimal(0)) ? "-" : "") + toExponential(tmp.significand, tmp.exponent, fractionDigits);
 };
 
 function exponentiate(a, n) {
