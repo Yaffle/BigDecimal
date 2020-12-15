@@ -328,6 +328,8 @@ console.assert(BigFloat.divide(BigFloat.BigFloat(49151), BigFloat.BigFloat(2**15
 console.assert(BigFloat.divide(BigFloat.BigFloat(13835058055282163711n), BigFloat.BigFloat(2n**63n)).toPrecision(1) === '1');
 console.assert(BigFloat.BigFloat(1).toPrecision(101) === '1.' + '0'.repeat(100));
 console.assert(bigfloatFromNumber(46892389.03583745).toPrecision(34) === '46892389.03583744913339614868164063');
+console.assert(BigFloat.exp(BigFloat.BigFloat(710), { maximumSignificantDigits: 1, roundingMode: 'half-even' }).toPrecision(1) === "2e+308");
+console.assert(BigFloat.exp(BigFloat.BigFloat(-739), { maximumSignificantDigits: 9, roundingMode: 'half-even' }).toPrecision(4) === "1.139e-321");
 
 function bigfloatFromNumber(number) {
   var exponent = Math.floor(Math.log2(Math.abs(number)));

@@ -54,11 +54,12 @@ BigDecimal.BigFloat = BigDecimal.BigDecimal = function (value) {
     return create(BigInt((match[1] || "") + (match[2] || "") + (match[3] || "")), BigInt(match[4] || "0") - BigInt((match[3] || "").length));
   }
   var a = create(BigInt(value), 0);
-  var b = normalize(a, null);
+  // `normalize` will change the exponent which is not good for fixed-point arithmetic (?)
+  /*var b = normalize(a, null);
   while (a !== b) {
     a = b;
     b = normalize(a, null);
-  }
+  }*/
   return a;
 };
 BigDecimal.toNumber = function (a) {
@@ -140,6 +141,16 @@ function normalize(a, rounding) {
   }
   return a;
 }
+var last = 0;
+var lastValue = 0n;
+function cachedBigInt(k) {
+  // k === maximumFractionDigits
+  if (last !== k) {
+    last = k;
+    lastValue = BigInt(k);
+  }
+  return lastValue;
+}
 function round(a, d, r, rounding) {
   const rIsNotZero = r != null && r !== 0n;
   if (rounding != null) {
@@ -161,24 +172,25 @@ function round(a, d, r, rounding) {
     }
     if (k > 0 || rIsNotZero) {
       if (BASE === 2 && !rIsNotZero && rounding.roundingMode === "floor") {
-        return create(a.significand >> BigInt(k), sum(a.exponent, k));
+        return create(a.significand >> cachedBigInt(k), sum(a.exponent, k));
       }
       if (BASE === 2 && !rIsNotZero && rounding.roundingMode === "ceil") {
-        return create(-((-a.significand) >> BigInt(k)), sum(a.exponent, k));
+        return create(-((-a.significand) >> cachedBigInt(k)), sum(a.exponent, k));
       }
       var dividend = a.significand;
-      var divisor = undefined;
-      var quotient = undefined;
-      var remainder = undefined;
+      var divisor = 0n;
+      var quotient = 0n;
+      var remainder = 0n;
       if (k <= 0) {
         divisor = d;
         quotient = dividend;
         remainder = r;
       } else {
         if (BASE === 2) {
-          divisor = 1n << BigInt(k);
-          quotient = dividend >> BigInt(k);
-          remainder = dividend - (quotient << BigInt(k));
+          const K = BigInt(k);
+          divisor = 1n << K;
+          quotient = dividend >> K;
+          remainder = dividend - (quotient << K);
         } else {
           divisor = BIGINT_BASE**BigInt(k);
           quotient = dividend / divisor;
@@ -284,8 +296,8 @@ BigDecimal.divide = function (a, b, rounding = null) {
     dividend = -dividend;
     divisor = -divisor;
   }
-  var quotient = undefined;
-  var remainder = undefined;
+  var quotient = 0n;
+  var remainder = 0n;
   if (rounding != null && rounding.roundingMode === "floor") {
     if (dividend >= 0n) {
       quotient = dividend / divisor;
@@ -469,7 +481,7 @@ var getDecimalSignificantAndExponent = function (value, precision) {
   }
   var rounding = {maximumSignificantDigits: 8, roundingMode: "half-even"};
   var result = undefined;
-  var fd = 0;
+  var fd = 0n;
   do {
     var x = value;
     
@@ -619,8 +631,10 @@ function tryToMakeCorrectlyRounded(specialValue, f, name) {
         var v = Number(x.significand) * Math.pow(BASE, Number(x.exponent));
         if (name !== "sin" && name !== "cos" && name !== "tan" || Math.abs(numberValue) < Math.PI / 4) {
           var numberValue = Math[name](v);
-          if (Math.abs(numberValue) <= 1/0 && numberValue * (1 - 1 / (Number.MAX_SAFE_INTEGER + 1)) !== 0) {
-            var e = getExponent(Math.abs(numberValue));
+          const MIN_NORMALIZED_VALUE = (Number.MIN_VALUE * 1.25 > Number.MIN_VALUE ? Number.MIN_VALUE : Number.MIN_VALUE * (Number.MAX_SAFE_INTEGER + 1) / 2) || 2**-1022;
+          const a = Math.abs(numberValue);
+          if (a < 1/0 && a > MIN_NORMALIZED_VALUE) {
+            var e = getExponent(a);
             var s = numberValue / Math.pow(2, e);
             var e1 = getExponent(Number.MAX_SAFE_INTEGER + 1) - 1;
             result = create(BigInt(s * Math.pow(2, e1)), BigInt(e - e1));//TODO: ?
@@ -706,7 +720,7 @@ BigDecimal.exp = tryToMakeCorrectlyRounded(0, function exp(x, rounding) {
     roundingMode: "half-even"
   };
   if (!BigDecimal.equal(x, BigDecimal.BigDecimal(0))) {
-    var logBASE = BigDecimal.divide(BigDecimal.BigDecimal(Math.log(BASE) * 10**16), BigDecimal.BigDecimal(10**16), internalRounding);
+    var logBASE = BigDecimal.divide(BigDecimal.BigDecimal(Math.log(BASE) * (Number.MAX_SAFE_INTEGER + 1)), BigDecimal.BigDecimal(Number.MAX_SAFE_INTEGER + 1), internalRounding);
     var k = BigDecimal.round(BigDecimal.divide(x, logBASE, {maximumSignificantDigits: Math.max(Number(getCountOfDigits(x)), 1), roundingMode: "half-even"}), {maximumFractionDigits: 0, roundingMode: "half-even"});
     if (!BigDecimal.equal(k, BigDecimal.BigDecimal(0))) {
       var logBASE = BigDecimal.log(BigDecimal.BigDecimal(BASE), {maximumSignificantDigits: internalRounding.maximumSignificantDigits + Number(getCountOfDigits(k)), roundingMode: "half-even"});
@@ -734,7 +748,7 @@ function divideByHalfOfPI(x, rounding) { // x = k*pi/2 + r + 2*pi*n, where |r| <
   if (BigDecimal.lessThan(x, BigDecimal.BigDecimal(0))) {
     throw new RangeError();
   }
-  if (BigDecimal.greaterThan(x, BigDecimal.divide(BigDecimal.BigDecimal(Math.floor(Math.PI / 4 * 10**15 + 0.5)), BigDecimal.BigDecimal(10**15), rounding))) {
+  if (BigDecimal.greaterThan(x, BigDecimal.divide(BigDecimal.BigDecimal(Math.floor(Math.PI / 4 * (Number.MAX_SAFE_INTEGER + 1) + 0.5)), BigDecimal.BigDecimal(Number.MAX_SAFE_INTEGER + 1), rounding))) {
     var halfOfPi = BigDecimal.multiply(BigDecimal.BigDecimal(2), BigDecimal.atan(BigDecimal.BigDecimal(1), {maximumSignificantDigits: rounding.maximumSignificantDigits + Number(getCountOfDigits(x)) + 1, roundingMode: "half-even"}));
     var i = BigDecimal.round(BigDecimal.divide(x, halfOfPi, {maximumSignificantDigits: Math.max(Number(getCountOfDigits(x)), 1), roundingMode: "half-even"}), {maximumFractionDigits: 0, roundingMode: "half-even"});
     var remainder = BigDecimal.subtract(x, BigDecimal.multiply(i, halfOfPi));
