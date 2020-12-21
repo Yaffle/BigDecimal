@@ -275,6 +275,9 @@ BigDecimal.subtract = function (a, b, rounding = null) {
 BigDecimal.multiply = function (a, b, rounding = null) {
   return normalize(round(create(a.significand * b.significand, sum(a.exponent, b.exponent)), null, null, rounding), rounding);
 };
+var bigIntScale = function (a, scaling) {
+  return (BASE === 2 ? (a << BigInt(scaling)) : BIGINT_BASE**BigInt(scaling) * a)
+};
 BigDecimal.divide = function (a, b, rounding = null) {
   if (a.significand === 0n) {
     return a;
@@ -290,8 +293,8 @@ BigDecimal.divide = function (a, b, rounding = null) {
     // Try to do exact division:
     scaling = Math.ceil(digits(b) * Math.log2(BASE)) + 1;
   }
-  var dividend = (scaling > 0 ? (BASE === 2 ? (a.significand << BigInt(scaling)) : BIGINT_BASE**BigInt(scaling) * a.significand) : a.significand);
-  var divisor = (scaling < 0 ? (BASE === 2 ? (b.significand << BigInt(-scaling)) : BIGINT_BASE**BigInt(-scaling) * b.significand) : b.significand);
+  var dividend = (scaling > 0 ? bigIntScale(a.significand, scaling) : a.significand);
+  var divisor = (scaling < 0 ? bigIntScale(b.significand, -scaling) : b.significand);
   if (divisor < 0n) {
     dividend = -dividend;
     divisor = -divisor;
@@ -321,20 +324,24 @@ BigDecimal.divide = function (a, b, rounding = null) {
   return round(create(quotient, diff(exponent, scaling)), divisor, remainder, rounding);
 };
 function compare(a, b) {
+  if (a.exponent === b.exponent) {
+    return a.significand < b.significand ? -1 : (a.significand > b.significand ? +1 : 0);
+  }
   if (a.significand <= 0n && b.significand >= 0n) {
     return !(a.significand === 0n && b.significand === 0n) ? -1 : 0;
   }
   if (a.significand >= 0n && b.significand <= 0n) {
     return (a.significand === 0n && b.significand === 0n) ? 0 : +1;
   }
-  var differenceOfLogarithms = BigInt(diff(a.exponent, b.exponent)) + BigInt(digits(a) - digits(b));
-  if (differenceOfLogarithms !== 0n) {
-    return a.significand < 0n && b.significand < 0n ? (differenceOfLogarithms > 0n ? -1 : +1) : (differenceOfLogarithms < 0n ? -1 : +1);
+  var differenceOfLogarithms = sum(diff(a.exponent, b.exponent), (digits(a) - digits(b)));
+  if (differenceOfLogarithms != 0) {
+    return a.significand < 0n && b.significand < 0n ? (differenceOfLogarithms > 0 ? -1 : +1) : (differenceOfLogarithms < 0 ? -1 : +1);
   }
   //var exponent = bigIntMax(a.exponent, b.exponent);
   var exponent = a.exponent < b.exponent ? b.exponent : a.exponent;
-  var difference = BIGINT_BASE**BigInt(diff(exponent, b.exponent)) * a.significand - BIGINT_BASE**BigInt(diff(exponent, a.exponent)) * b.significand;
-  return difference < 0n ? -1 : (difference > 0n ? +1 : 0);
+  var x = bigIntScale(a.significand, diff(exponent, b.exponent));
+  var y = bigIntScale(b.significand, diff(exponent, a.exponent));
+  return x < y ? -1 : (x > y ? +1 : 0);
 }
 BigDecimal.lessThan = function (a, b) {
   return compare(a, b) < 0;
