@@ -12,7 +12,7 @@ It can be compiled using https://www.npmjs.com/package/babel-plugin-transform-bi
 
     BigDecimal.BigDecimal(string)
     BigDecimal.BigDecimal(bigint)
-    BigDecimal.BigDecimal(number) (only integers)
+    BigDecimal.BigDecimal(number) // (only integers)
     a.toString()
     a.toFixed(fractionDigits)
     a.toPrecision(precision)
