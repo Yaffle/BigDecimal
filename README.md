@@ -10,58 +10,39 @@ It can be compiled using https://www.npmjs.com/package/babel-plugin-transform-bi
 
 ## Type conversion:
 
-`BigDecimal.BigDecimal(string)`
-
-`BigDecimal.BigDecimal(bigint)`
-
-`BigDecimal.BigDecimal(number) (only integers)`
-
-`a.toString()`
-
-`a.toFixed(fractionDigits)`
-
-`a.toPrecision(precision)`
-
-`a.toExponential(fractionDigits)`
-
-`BigDecimal.toBigInt(a)` (not in the spec)
-
-`BigDecimal.toNumber(a)` (not in the spec, only integers)
+    `BigDecimal.BigDecimal(string)`
+    `BigDecimal.BigDecimal(bigint)`
+    `BigDecimal.BigDecimal(number) (only integers)`
+    `a.toString()`
+    `a.toFixed(fractionDigits)`
+    `a.toPrecision(precision)`
+    `a.toExponential(fractionDigits)`
+    `BigDecimal.toBigInt(a)` (not in the spec)
+    `BigDecimal.toNumber(a)` (not in the spec, only integers)
 
 
 ## Arithmetic:
 
-`BigDecimal.unaryMinus(a)`
-
-`BigDecimal.add(a, b[, rounding])`
-
-`BigDecimal.subtract(a, b[, rounding])`
-
-`BigDecimal.multiply(a, b[, rounding])`
-
-`BigDecimal.divide(a, b, rounding)`
-
-`BigDecimal.round(a, rounding)`
+    `BigDecimal.unaryMinus(a)`
+    `BigDecimal.add(a, b[, rounding])`
+    `BigDecimal.subtract(a, b[, rounding])`
+    `BigDecimal.multiply(a, b[, rounding])`
+    `BigDecimal.divide(a, b, rounding)`
+    `BigDecimal.round(a, rounding)`
 
 ## Comparison:
 
-`BigDecimal.equal(a, b)`
-
-`BigDecimal.lessThan(a, b)`
-
-`BigDecimal.greaterThan(a, b)`
+    `BigDecimal.equal(a, b)`
+    `BigDecimal.lessThan(a, b)`
+    `BigDecimal.greaterThan(a, b)`
 
 ## Math: (not in the spec)
 
-`BigDecimal.log(a, rounding)`
-
-`BigDecimal.exp(a, rounding)`
-
-`BigDecimal.sin(a, rounding)`
-
-`BigDecimal.cos(a, rounding)`
-
-`BigDecimal.atan(a, rounding)`
+    `BigDecimal.log(a, rounding)`
+    `BigDecimal.exp(a, rounding)`
+    `BigDecimal.sin(a, rounding)`
+    `BigDecimal.cos(a, rounding)`
+    `BigDecimal.atan(a, rounding)`
 
 The `rounding` argument may look like `{maximumFractionDigits: 10, roundingMode: "half-even"}` or `{maximumSignificantDigits: 10, roundingMode: "half-even"}`, where the roundingMode can be "floor", or "ceil", or "half-even", or "half-up".
 
