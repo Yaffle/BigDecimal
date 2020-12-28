@@ -73,6 +73,9 @@ Use to round to an integer `BigDecimal.round(a, {maximumFractionDigits: 0, round
 3. ...
 
 # Benchmark results:
+
+Results of running the benchmark from https://github.com/munsocket/jampary#early-stage-results-without-wasm-and-fma :
+
 | library      | time    |
 |--------------|---------|
 | Jampary_Wasm | 502 ms  |
