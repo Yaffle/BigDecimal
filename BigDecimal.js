@@ -75,6 +75,9 @@ BigDecimal.toNumber = function (a) {
   return Number(BigDecimal.toBigInt(a));
 };
 BigDecimal.toBigInt = function (a) {
+  if (a.exponent === 0) {
+    return a.significand;
+  }
   if (a.exponent < 0 && a.significand % BIGINT_BASE**BigInt(-a.exponent) !== 0n) {
     throw new RangeError("The BigDecimal " + a.toString() + " cannot be converted to a BigInt because it is not an integer");
   }
