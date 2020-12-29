@@ -61,10 +61,10 @@ console.log(pi.toString());
 ```
 
 # Note:
-Consider to use only "half-even" rounding mode and rounding to a maximum number of significant digits for floating-point arithmetic,
-or only "floor" rounding to a maximum number of fraction digits for fixed-point arithmetic.
-For the best performance use BigFloat and rounding like {maximumFractionDigits: number, roundingMode: "floor"}.
-Use to round to an integer `BigDecimal.round(a, {maximumFractionDigits: 0, roundingMode: "half-even"})`.
+* Consider to use only "half-even" rounding mode and rounding to a maximum number of significant digits for floating-point arithmetic,
+  or only "floor" rounding to a maximum number of fraction digits for fixed-point arithmetic.
+* For the best performance use BigFloat and rounding like {maximumFractionDigits: number, roundingMode: "floor"}.
+* Use to round to an integer `BigDecimal.round(a, {maximumFractionDigits: 0, roundingMode: "half-even"})`.
 
 
 # Similar projects:
