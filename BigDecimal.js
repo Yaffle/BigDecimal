@@ -35,14 +35,6 @@ var factory = function (BASE) {
 
   const BIGINT_BASE = BigInt(BASE);
 
-function getExponent() {
-  let e = Math.floor(Math.log2(Math.abs(value)));
-  if (Math.abs(value) < 2**e) {
-    e -= 1;
-  }
-  return e;
-}
-
 function BigDecimal(significand, exponent) {
   this.significand = significand;
   this.exponent = exponent;
@@ -63,7 +55,7 @@ BigDecimal.BigFloat = BigDecimal.BigDecimal = function (value) {
   }
   if (typeof value === "number" && Math.floor(value) !== value) {
     if (BASE === 2) {
-      const e = getExponent(Math.abs(value));
+      const e = getExponent(value);
       const f = value / 2**e;
       const significand = f * (Number.MAX_SAFE_INTEGER + 1) / 2;
       const exponent = e - (Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1)) - 1);
@@ -613,9 +605,9 @@ function significandDigits(a) {
   return to;
 }
 
-function getExponent(number) { // number > 0
-  const e = Math.floor(Math.log(number) / Math.log(2)) - 1;
-  return number / Math.pow(2, e) >= 2 ? e + 1 : e;
+function getExponent(number) {
+  const e = Math.floor(Math.log(Math.abs(number)) / Math.log(2)) - 1;
+  return Math.abs(number) / Math.pow(2, e) >= 2 ? e + 1 : e;
 }
 
 
