@@ -327,24 +327,16 @@ globalThis.BigFloat = BigFloat;
 console.assert(BigFloat.divide(BigFloat.BigFloat(49151), BigFloat.BigFloat(2**15)).toPrecision(1) === '1');
 console.assert(BigFloat.divide(BigFloat.BigFloat(13835058055282163711n), BigFloat.BigFloat(2n**63n)).toPrecision(1) === '1');
 console.assert(BigFloat.BigFloat(1).toPrecision(101) === '1.' + '0'.repeat(100));
-console.assert(bigfloatFromNumber(46892389.03583745).toPrecision(34) === '46892389.03583744913339614868164063');
+console.assert(BigFloat.BigFloat(46892389.03583745).toPrecision(34) === '46892389.03583744913339614868164063');
+console.assert(BigFloat.BigFloat(-9422.84286622639).toExponential(36) === "-9.422842866226390469819307327270507813e+3");
 console.assert(BigFloat.exp(BigFloat.BigFloat(710), { maximumSignificantDigits: 1, roundingMode: 'half-even' }).toPrecision(1) === "2e+308");
 console.assert(BigFloat.exp(BigFloat.BigFloat(-739), { maximumSignificantDigits: 9, roundingMode: 'half-even' }).toPrecision(4) === "1.139e-321");
 
-function bigfloatFromNumber(number) {
-  var exponent = Math.floor(Math.log2(Math.abs(number)));
-  if (Math.abs(number) < 2**exponent) {
-    exponent -= 1;
-  }
-  const sign = BigFloat.BigFloat(Math.sign(number));
-  const decimal = BigFloat.divide(BigFloat.BigFloat(Math.abs(number) / 2**exponent * (Number.MAX_SAFE_INTEGER + 1) / 2), BigFloat.BigFloat((Number.MAX_SAFE_INTEGER + 1) / 2));
-  const scale = exponent >= 0 ? BigFloat.BigFloat(2**exponent) : BigFloat.divide(BigFloat.BigFloat(1), BigFloat.BigFloat(2**-exponent));
-  return BigFloat.multiply(sign, BigFloat.multiply(decimal, scale));
-}
 
-for (var c = 0; c < 1000; c += 1) {
+console.time();
+for (var c = 0; c < 10000; c += 1) {
   var number = randomNumber();
-  var bigfloat = bigfloatFromNumber(number);
+  var bigfloat = BigFloat.BigFloat(number);
   var n = random(0, 100);
   if (Math.abs(number) <= 999999999999999868928) {
     console.assert(bigfloat.toFixed(n) === number.toFixed(n), bigfloat.toFixed(n), number.toFixed(n));
@@ -352,6 +344,9 @@ for (var c = 0; c < 1000; c += 1) {
   console.assert(bigfloat.toExponential(n) === number.toExponential(n), number, n, bigfloat.toExponential(n), number.toExponential(n));
   console.assert(bigfloat.toPrecision(Math.min(n + 1, 100)) === number.toPrecision(Math.min(n + 1, 100)), number);
 }
+console.timeEnd();
+// default: 6836.679931640625 ms
+
 
 var roundNumber = function (number, precision) {
   var v = number * 2**(53-precision);
@@ -366,7 +361,7 @@ for (var c = 0; c < 1000; c += 1) {
   //var number = Number.MAX_VALUE;
   //debugger;
   if (number !== 0 && !Number.isNaN(number)) {
-    var bigfloat = bigfloatFromNumber(number);
+    var bigfloat = BigFloat.BigFloat(number);
     var f = 'sin cos atan exp log'.split(' ')[Math.floor(Math.random() * 5)];
     //f = 'cos';
     var value = Math[f](number);
@@ -392,5 +387,4 @@ console.timeEnd();
 console.log(s);
 
 globalThis.randomNumber = randomNumber;
-globalThis.bigfloatFromNumber = bigfloatFromNumber;
 globalThis.roundNumber = roundNumber;

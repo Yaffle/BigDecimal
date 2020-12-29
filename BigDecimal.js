@@ -35,6 +35,14 @@ var factory = function (BASE) {
 
   const BIGINT_BASE = BigInt(BASE);
 
+function getExponent() {
+  let e = Math.floor(Math.log2(Math.abs(value)));
+  if (Math.abs(value) < 2**e) {
+    e -= 1;
+  }
+  return e;
+}
+
 function BigDecimal(significand, exponent) {
   this.significand = significand;
   this.exponent = exponent;
@@ -52,6 +60,15 @@ BigDecimal.BigFloat = BigDecimal.BigDecimal = function (value) {
       throw new RangeError();
     }
     return create(BigInt((match[1] || "") + (match[2] || "") + (match[3] || "")), BigInt(match[4] || "0") - BigInt((match[3] || "").length));
+  }
+  if (typeof value === "number" && Math.floor(value) !== value) {
+    if (BASE === 2) {
+      const e = getExponent(Math.abs(value));
+      const f = value / 2**e;
+      const significand = f * (Number.MAX_SAFE_INTEGER + 1) / 2;
+      const exponent = exponent - (Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1)) - 1);
+      return create(BigInt(significand), exponent);//TODO: ?
+    }
   }
   var a = create(BigInt(value), 0);
   // `normalize` will change the exponent which is not good for fixed-point arithmetic (?)
@@ -451,7 +468,7 @@ var getDecimalSignificantAndExponent = function (value, precision) {
         n -= 1n;
       }
     }
-    return y;
+    return y == undefined ? BigDecimal.BigDecimal(1) : y;
   };
   var log10Approximate = function (x) {
     if (!BigDecimal.greaterThan(x, BigDecimal.BigDecimal(0))) {
@@ -486,6 +503,7 @@ var getDecimalSignificantAndExponent = function (value, precision) {
   if (BigDecimal.equal(value, BigDecimal.BigDecimal(0))) {
     return {significand: "0", exponent: 0n};
   }
+  var ten = BigDecimal.BigDecimal(10);
   var rounding = {maximumSignificantDigits: 8, roundingMode: "half-even"};
   var result = undefined;
   var fd = 0n;
@@ -494,28 +512,29 @@ var getDecimalSignificantAndExponent = function (value, precision) {
     
     fd = 0n - log10Approximate(x);
     if (fd > 0) {
-      x = BigDecimal.multiply(x, exponentiate(BigDecimal.BigDecimal(10), fd), rounding);
+      x = BigDecimal.multiply(x, exponentiate(ten, fd), rounding);
     } else if (fd < 0) {
-      x = BigDecimal.divide(x, exponentiate(BigDecimal.BigDecimal(10), -fd), rounding);
+      x = BigDecimal.divide(x, exponentiate(ten, -fd), rounding);
     }
-    if (!BigDecimal.lessThan(x, BigDecimal.BigDecimal(10))) {
+    if (!BigDecimal.lessThan(x, ten)) {
       fd -= 1n;
-      x = BigDecimal.divide(x, BigDecimal.BigDecimal(10), rounding);
+      x = BigDecimal.divide(x, ten, rounding);
     }
     if (BigDecimal.lessThan(x, BigDecimal.BigDecimal(1))) {
       fd += 1n;
-      x = BigDecimal.multiply(x, BigDecimal.BigDecimal(10), rounding);
+      x = BigDecimal.multiply(x, ten, rounding);
     }
-    if (!BigDecimal.lessThan(x, BigDecimal.BigDecimal(1)) && BigDecimal.lessThan(x, BigDecimal.BigDecimal(10))) {
+    if (!BigDecimal.lessThan(x, BigDecimal.BigDecimal(1)) && BigDecimal.lessThan(x, ten)) {
       fd -= 1n;
       fd += BigInt(precision);
       if (fd > 0) {
-        x = BigDecimal.multiply(value, exponentiate(BigDecimal.BigDecimal(10), fd), rounding);
+        x = BigDecimal.multiply(value, exponentiate(ten, fd), rounding);
       } else if (fd < 0) {
-        x = BigDecimal.divide(value, exponentiate(BigDecimal.BigDecimal(10), -fd), rounding);
+        x = BigDecimal.divide(value, exponentiate(ten, -fd), rounding);
       } else {
         x = value;
       }
+      //x = BigDecimal.multiply(x, exponentiate(ten, BigInt(precision - 1)), rounding);
       var error = BigDecimal.multiply(BigDecimal.multiply(BigDecimal.BigDecimal(bigIntAbs(fd) + BigInt(precision)), BigDecimal.divide(BigDecimal.BigDecimal(1), exponentiate(BigDecimal.BigDecimal(BASE), BigInt(rounding.maximumSignificantDigits)))), x);
       //TODO: ?
       if (rounding.maximumSignificantDigits > (Math.abs(Number(fd)) + precision) * Math.log2(10) + digits(value) || BigDecimal.equal(roundToInteger(BigDecimal.add(x, error)), roundToInteger(BigDecimal.subtract(x, error)))) {
