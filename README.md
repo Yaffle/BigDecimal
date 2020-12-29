@@ -63,14 +63,21 @@ console.log(pi.toString());
 # Note:
 Consider to use only "half-even" rounding mode and rounding to a maximum number of significant digits for floating-point arithmetic,
 or only "floor" rounding to a maximum number of fraction digits for fixed-point arithmetic.
-BigFloat may have better performance.
+For the best performance use BigFloat and rounding like {maximumFractionDigits: number, roundingMode: "floor"}.
 Use to round to an integer `BigDecimal.round(a, {maximumFractionDigits: 0, roundingMode: "half-even"})`.
 
 
 # Similar projects:
-1. https://github.com/MikeMcl/decimal.js/
-2. https://github.com/uzyn/bigdenary
-3. ...
+1. https://github.com/MikeMcl/decimal.js/ (decimal)
+2. https://github.com/uzyn/bigdenary (decimal)
+3. https://github.com/MikeMcl/big.js/ (decimal)
+4. https://github.com/MikeMcl/bignumber.js/ (decimal)
+5. https://github.com/davidmartinez10/bigfloat#readme (decimal)
+6. https://github.com/plow-technologies/bs-Zarith (decimal)
+7. https://github.com/royNiladri/js-big-decimal (decimal)
+8. https://github.com/charto/bigfloat (binary)
+9. https://github.com/munsocket/jampary (binary)
+10. ...
 
 # Benchmark results:
 
