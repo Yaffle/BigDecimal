@@ -66,7 +66,7 @@ BigDecimal.BigFloat = BigDecimal.BigDecimal = function (value) {
       const e = getExponent(Math.abs(value));
       const f = value / 2**e;
       const significand = f * (Number.MAX_SAFE_INTEGER + 1) / 2;
-      const exponent = exponent - (Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1)) - 1);
+      const exponent = e - (Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1)) - 1);
       return create(BigInt(significand), exponent);//TODO: ?
     }
   }
