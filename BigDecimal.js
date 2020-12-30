@@ -261,23 +261,25 @@ BigDecimal.unaryMinus = function (a) {
   return create(-a.significand, a.exponent);
 };
 BigDecimal.add = function (a, b, rounding = null) {
-  if (a.significand === 0n) {
-    return round(b, null, null, rounding);
-  }
-  if (b.significand === 0n) {
-    return round(a, null, null, rounding);
-  }
-  if (a.exponent > b.exponent) {
-    if (rounding != null && rounding.maximumSignificantDigits != null && Number(a.exponent) - Number(b.exponent) > digits(b) + (rounding.maximumSignificantDigits + 1)) {
-      b = create(b.significand < 0 ? -1n : 1n, diff(a.exponent, rounding.maximumSignificantDigits + 1));
+  if (a.exponent !== b.exponent) { // optimization
+    if (a.significand === 0n) {
+      return round(b, null, null, rounding);
     }
-    return round(create((BASE === 2 ? (a.significand << BigInt(diff(a.exponent, b.exponent))) : BIGINT_BASE**BigInt(diff(a.exponent, b.exponent)) * a.significand) + b.significand, b.exponent), null, null, rounding);
-  }
-  if (b.exponent > a.exponent) {
-    if (rounding != null && rounding.maximumSignificantDigits != null && Number(b.exponent) - Number(a.exponent) > BigInt(digits(a) + (rounding.maximumSignificantDigits + 1))) {
-      a = create(a.significand < 0 ? -1n : 1n, diff(b.exponent, rounding.maximumSignificantDigits + 1));
+    if (b.significand === 0n) {
+      return round(a, null, null, rounding);
     }
-    return round(create(a.significand + (BASE === 2 ? (b.significand << BigInt(diff(b.exponent, a.exponent))) : BIGINT_BASE**BigInt(diff(b.exponent, a.exponent)) * b.significand), a.exponent), null, null, rounding);
+    if (a.exponent > b.exponent) {
+      if (rounding != null && rounding.maximumSignificantDigits != null && Number(a.exponent) - Number(b.exponent) > digits(b) + (rounding.maximumSignificantDigits + 1)) {
+        b = create(b.significand < 0 ? -1n : 1n, diff(a.exponent, rounding.maximumSignificantDigits + 1));
+      }
+      return round(create((BASE === 2 ? (a.significand << BigInt(diff(a.exponent, b.exponent))) : BIGINT_BASE**BigInt(diff(a.exponent, b.exponent)) * a.significand) + b.significand, b.exponent), null, null, rounding);
+    }
+    if (b.exponent > a.exponent) {
+      if (rounding != null && rounding.maximumSignificantDigits != null && Number(b.exponent) - Number(a.exponent) > BigInt(digits(a) + (rounding.maximumSignificantDigits + 1))) {
+        a = create(a.significand < 0 ? -1n : 1n, diff(b.exponent, rounding.maximumSignificantDigits + 1));
+      }
+      return round(create(a.significand + (BASE === 2 ? (b.significand << BigInt(diff(b.exponent, a.exponent))) : BIGINT_BASE**BigInt(diff(b.exponent, a.exponent)) * b.significand), a.exponent), null, null, rounding);
+    }
   }
   return round(create(a.significand + b.significand, a.exponent), null, null, rounding);
 };
