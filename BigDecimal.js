@@ -181,7 +181,7 @@ function round(a, d, r, rounding) {
       }
       k = 0 - Number(sum(a.exponent, maximumFractionDigits));
       //k = Math.min(k, digits(a) + 1);
-      if (k < 0 && !rIsNotZero) {
+      if (BASE === 2 && k < 0 && !rIsNotZero) {
         return create(a.significand << BigInt(-k), 0 - maximumFractionDigits);
       }
     }
