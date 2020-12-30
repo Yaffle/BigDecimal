@@ -182,60 +182,51 @@ function round(a, rounding) {
       //k = Math.min(k, digits(a) + 1);
     }
     if (k > 0) {
-      if (BASE === 2 && rounding.roundingMode === "floor") {
-        return create(a.significand >> cachedBigInt(k), sum(a.exponent, k));
-      }
-      if (BASE === 2 && rounding.roundingMode === "ceil") {
-        return create(-((-a.significand) >> cachedBigInt(k)), sum(a.exponent, k));
-      }
-      var dividend = a.significand;
-      var divisor = 0n;
+      const dividend = a.significand;
+      const roundingMode = rounding.roundingMode;
       var quotient = 0n;
-      var remainder = 0n;
-      const K = BigInt(k);
-      if (BASE === 2) {
-        divisor = 1n << K;
-        quotient = dividend >> K;
-        remainder = dividend - (quotient << K);
+      if (roundingMode === "floor") {
+        if (BASE === 2) {
+          quotient = dividend >> cachedBigInt(k);
+        } else {
+          if (dividend >= 0n) {
+            quotient = dividend / BIGINT_BASE**BigInt(k);
+          } else {
+            quotient = (dividend + 1n) / BIGINT_BASE**BigInt(k) - 1n;
+          }
+        }
+      } else if (roundingMode === "ceil") {
+        if (BASE === 2) {
+          quotient = -((-dividend) >> cachedBigInt(k));
+        } else {
+          if (dividend < 0n) {
+            quotient = dividend / BIGINT_BASE**BigInt(k);
+          } else {
+            quotient = (dividend - 1n) / BIGINT_BASE**BigInt(k) + 1n;
+          }
+        }
       } else {
-        divisor = BIGINT_BASE**K;
+        const divisor = BIGINT_BASE**BigInt(k);
         quotient = dividend / divisor;
-        remainder = dividend - divisor * quotient;
-      }
-      if (remainder !== 0n) {
-        var roundingMode = rounding.roundingMode;
-        if (roundingMode === "floor") {
-          if (remainder < 0n) {
-            quotient -= 1n;
+        const remainder = dividend - divisor * quotient;
+        if (remainder !== 0n) {
+          var e = 0n;
+          if (roundingMode === "half-up") {
+            e = 1n;
+          } else if (roundingMode === "half-down") {
+            e = 0n;
+          } else if (roundingMode === "half-even") {
+            e = (quotient % 2n);
+          } else {
+            throw new RangeError("supported roundingMode (floor/ceil/half-even/half-up/half-down) is not given");
           }
-        } else if (roundingMode === "ceil") {
-          if (remainder > 0n) {
-            quotient += 1n;
-          }
-        } else if (roundingMode === "half-up") {
-          if (2n * remainder >= divisor) {
-            quotient += 1n;
-          }
-          if (-2n * remainder >= divisor) {
-            quotient -= 1n;
-          }
-        } else if (roundingMode === "half-down") {
-          if (2n * remainder > divisor) {
-            quotient += 1n;
-          }
-          if (-2n * remainder > divisor) {
-            quotient -= 1n;
-          }
-        } else if (roundingMode === "half-even") {
-          var twoRemainders = remainder + remainder + (quotient % 2n);
+          var twoRemainders = remainder + remainder + e;
           if (twoRemainders > divisor) {
             quotient += 1n;
           }
           if (-twoRemainders > divisor) {
             quotient -= 1n;
           }
-        } else {
-          throw new RangeError("supported roundingMode (floor/ceil/half-even/half-up/half-down) is not given");
         }
       }
       return create(quotient, sum(a.exponent, k));
