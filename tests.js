@@ -60,6 +60,26 @@ console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(5), B
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-5), BigDecimal.BigDecimal(2), { maximumFractionDigits: 0, roundingMode: 'half-even' })) === -2);
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-5), BigDecimal.BigDecimal(-2), { maximumFractionDigits: 0, roundingMode: 'half-even' })) === 2);
 
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1, roundingMode: 'half-up' })) === 2);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 1, roundingMode: 'half-up' })) === -2);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1, roundingMode: 'half-up' })) === -2);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 1, roundingMode: 'half-up' })) === 2);
+
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(2), { maximumFractionDigits: 0, roundingMode: 'half-up' })) === 2);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(-2), { maximumFractionDigits: 0, roundingMode: 'half-up' })) === -2);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(2), { maximumFractionDigits: 0, roundingMode: 'half-up' })) === -2);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(-2), { maximumFractionDigits: 0, roundingMode: 'half-up' })) === 2);
+
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1, roundingMode: 'half-down' })) === 1);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 1, roundingMode: 'half-down' })) === -1);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1, roundingMode: 'half-down' })) === -1);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 1, roundingMode: 'half-down' })) === 1);
+
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(2), { maximumFractionDigits: 0, roundingMode: 'half-down' })) === 1);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(-2), { maximumFractionDigits: 0, roundingMode: 'half-down' })) === -1);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(2), { maximumFractionDigits: 0, roundingMode: 'half-down' })) === -1);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(-2), { maximumFractionDigits: 0, roundingMode: 'half-down' })) === 1);
+
 // double rounding
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(699), BigDecimal.BigDecimal(200), { maximumSignificantDigits: 1, roundingMode: 'half-even' })) === 3);
 
@@ -192,7 +212,7 @@ console.assert(BigDecimal.equal(BigDecimal.atan(BigDecimal.BigDecimal(-2), { max
 
 // random tests:
 
-for (var c = 0; c < 1000; c += 1) {
+for (var c = 0; c < 10000; c += 1) {
   var aValue = ((1 + Math.random()) + 'e+' + (Math.floor(Math.random() * 20) - 10)).replace(/\+\-/g, '-');
   var bValue = ((1 + Math.random()) + 'e+' + (Math.floor(Math.random() * 20) - 10)).replace(/\+\-/g, '-');
   var a = BigDecimal.BigDecimal(aValue);
@@ -253,9 +273,9 @@ function bigdecimalFromNumber(number) {
   return BigDecimal.multiply(sign, BigDecimal.multiply(decimal, scale));
 }
 
-for (var c = 0; c < 1000; c += 1) {
+for (var c = 0; c < 10000; c += 1) {
   var number = randomNumber();
-  var bigdecimal = bigdecimalFromNumber(number);
+  //var bigdecimal = bigdecimalFromNumber(number);
   // https://github.com/tc39/ecma402/issues/128
   var maxFraction = random(0, 20);
   var minFraction = random(0, 20);

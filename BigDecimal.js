@@ -212,7 +212,7 @@ function round(a, rounding) {
         if (remainder !== 0n) {
           var e = 0n;
           if (roundingMode === "half-up") {
-            e = 1n;
+            e = remainder < 0n ? -1n : 1n;
           } else if (roundingMode === "half-down") {
             e = 0n;
           } else if (roundingMode === "half-even") {
@@ -267,7 +267,7 @@ BigDecimal.multiply = function (a, b, rounding = null) {
   return normalize(round(create(a.significand * b.significand, sum(a.exponent, b.exponent)), rounding), rounding);
 };
 var bigIntScale = function (a, scaling) {
-  return (BASE === 2 ? (a << BigInt(scaling)) : BIGINT_BASE**BigInt(scaling) * a)
+  return (BASE === 2 ? (a << BigInt(scaling)) : BIGINT_BASE**BigInt(scaling) * a);
 };
 BigDecimal.divide = function (a, b, rounding = null) {
   if (a.significand === 0n) {
