@@ -60,6 +60,9 @@ console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(5), B
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-5), BigDecimal.BigDecimal(2), { maximumFractionDigits: 0, roundingMode: 'half-even' })) === -2);
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-5), BigDecimal.BigDecimal(-2), { maximumFractionDigits: 0, roundingMode: 'half-even' })) === 2);
 
+// double rounding
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(699), BigDecimal.BigDecimal(200), { maximumSignificantDigits: 1, roundingMode: 'half-even' })) === 3);
+
 // bugs (thanks to https://github.com/MikeMcl/bignumber.js/issues/256):
 console.assert(BigDecimal.add(BigDecimal.BigDecimal('2e-3'), BigDecimal.BigDecimal('-2e+1'), { maximumSignificantDigits: 1, roundingMode: 'floor' }).toString() === '-20');
 console.assert(BigDecimal.add(BigDecimal.BigDecimal('4e-5'), BigDecimal.BigDecimal('-6e+4'), { maximumSignificantDigits: 1, roundingMode: 'ceil' }).toString() === '-50000');
