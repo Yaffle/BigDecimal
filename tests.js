@@ -99,10 +99,10 @@ console.assert(BigDecimal.divide(BigDecimal.BigDecimal('6e+7'), BigDecimal.BigDe
 console.assert(BigDecimal.divide(BigDecimal.BigDecimal('6e-6'), BigDecimal.BigDecimal('-9e+3'), { maximumSignificantDigits: 1, roundingMode: 'floor' }).toString() === '-7e-10');
 
 // special cases
-//console.assert(BigDecimal.add(BigDecimal.BigDecimal('1e+10000000000000001'), BigDecimal.BigDecimal('1e+0'), { maximumSignificantDigits: 1, roundingMode: 'floor' }).toString() === '1e+10000000000000001');
+console.assert(BigDecimal.add(BigDecimal.BigDecimal('1e+9000000000000000'), BigDecimal.BigDecimal('1e+0'), { maximumSignificantDigits: 1, roundingMode: 'floor' }).toString() === '1e+9000000000000000');
 //console.assert(BigDecimal.add(BigDecimal.BigDecimal('1e+10000000000000001'), BigDecimal.BigDecimal('1e-1'), { maximumFractionDigits: 0, roundingMode: 'floor' }).toString() === '1e+10000000000000001');
 // console.time(); exponentiate(BigDecimal.BigDecimal(10), 1000000n); console.timeEnd();
-//console.assert(BigDecimal.divide(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(10), {maximumSignificantDigits: 1e15}).toString(), '?'); // performance
+//console.assert(BigDecimal.divide(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(10), {maximumSignificantDigits: 1e9, roundingMode: 'half-even'}).toString() === '0.1'); // performance
 //console.assert(BigDecimal.divide(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(10), {maximumFractionDigits: 1e15}).toString(), '?'); // performance
 //console.assert(BigDecimal.exp(BigDecimal.BigDecimal('1e+100'), { maximumSignificantDigits: 1, roundingMode: 'half-even' }).toString() === '2e+4342944819032518276511289189166050822943970058036665661144537831658646492088707747292249493384317483');
 //console.assert(BigDecimal.exp(BigDecimal.BigDecimal('-1e+100'), { maximumSignificantDigits: 1, roundingMode: 'half-even' }).toString() === '7e-4342944819032518276511289189166050822943970058036665661144537831658646492088707747292249493384317484');
