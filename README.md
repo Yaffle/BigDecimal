@@ -60,7 +60,8 @@ Similar to BigDecimal, but uses base 2.
 
 import {BigDecimal} from "./node_modules/@yaffle/bigdecimal/BigDecimal.js";
 
-var pi = BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), {maximumSignificantDigits: 1000, roundingMode: "half-even"}));
+const rounding = {maximumSignificantDigits: 1000, roundingMode: "half-even"};
+let pi = BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), rounding));
 
 console.log(pi.toString());
 
