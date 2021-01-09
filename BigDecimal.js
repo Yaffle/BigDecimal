@@ -50,7 +50,8 @@ BigDecimal.BigFloat = BigDecimal.BigDecimal = function (value) {
     if (match == null) {
       throw new RangeError();
     }
-    return create(BigInt((match[1] || "") + (match[2] || "") + (match[3] || "")), BigInt(match[4] || "0") - BigInt((match[3] || "").length));
+    const exponent = Number(match[4] || "0");
+    return create(BigInt((match[1] || "") + (match[2] || "") + (match[3] || "")), diff(Math.abs(exponent) < Number.MAX_SAFE_INTEGER ? exponent : BigInt(match[4] || "0"), (match[3] || "").length));
   }
   if (typeof value === "number" && Math.floor(value) !== value) {
     if (BASE === 2) {
@@ -140,7 +141,7 @@ function diff(a, b) {
   return sum(a, -b);
 }
 const E = Math.ceil(0.5 * Math.log2(Number.MAX_SAFE_INTEGER + 1) / Math.log2(BASE) - 1);
-const N = BigInt(Math.pow(BASE, E));
+const N = BigInt(BASE**E);
 function normalize(a, rounding) {
   if (rounding == null || rounding.maximumSignificantDigits != null) {
     if (a.significand === 0n) {
@@ -169,6 +170,15 @@ function cachedBigInt(k) {
     lastValue = BigInt(k);
   }
   return lastValue;
+}
+let lastExponent = 0;
+let lastPower = 1n;
+function cachedPower(k) {
+  if (lastExponent !== k) {
+    lastExponent = k;
+    lastPower = BIGINT_BASE**cachedBigInt(k);
+  }
+  return lastPower;
 }
 function round(a, rounding) {
   if (rounding != null) {
@@ -204,9 +214,9 @@ function round(a, rounding) {
           quotient = dividend >> cachedBigInt(k);
         } else {
           if (dividend >= 0n) {
-            quotient = dividend / BIGINT_BASE**BigInt(k);
+            quotient = dividend / cachedPower(k);
           } else {
-            quotient = (dividend + 1n) / BIGINT_BASE**BigInt(k) - 1n;
+            quotient = (dividend + 1n) / cachedPower(k) - 1n;
           }
         }
       } else if (roundingMode === "ceil") {
@@ -214,9 +224,9 @@ function round(a, rounding) {
           quotient = -((-dividend) >> cachedBigInt(k));
         } else {
           if (dividend < 0n) {
-            quotient = dividend / BIGINT_BASE**BigInt(k);
+            quotient = dividend / cachedPower(k);
           } else {
-            quotient = (dividend - 1n) / BIGINT_BASE**BigInt(k) + 1n;
+            quotient = (dividend - 1n) / cachedPower(k) + 1n;
           }
         }
       } else {
@@ -261,13 +271,13 @@ BigDecimal.add = function (a, b, rounding = null) {
       if (rounding != null && rounding.maximumSignificantDigits != null && Number(a.exponent) - Number(b.exponent) > digits(b.significand) + (rounding.maximumSignificantDigits + 1)) {
         b = create(b.significand < 0 ? -1n : 1n, diff(a.exponent, rounding.maximumSignificantDigits + 1));
       }
-      return round(create((BASE === 2 ? (a.significand << BigInt(diff(a.exponent, b.exponent))) : BIGINT_BASE**BigInt(diff(a.exponent, b.exponent)) * a.significand) + b.significand, b.exponent), rounding);
+      return round(create(bigIntScale(a.significand, diff(a.exponent, b.exponent)) + b.significand, b.exponent), rounding);
     }
     if (b.exponent > a.exponent) {
       if (rounding != null && rounding.maximumSignificantDigits != null && Number(b.exponent) - Number(a.exponent) > BigInt(digits(a.significand) + (rounding.maximumSignificantDigits + 1))) {
         a = create(a.significand < 0 ? -1n : 1n, diff(b.exponent, rounding.maximumSignificantDigits + 1));
       }
-      return round(create(a.significand + (BASE === 2 ? (b.significand << BigInt(diff(b.exponent, a.exponent))) : BIGINT_BASE**BigInt(diff(b.exponent, a.exponent)) * b.significand), a.exponent), rounding);
+      return round(create(a.significand + bigIntScale(b.significand, diff(b.exponent, a.exponent)), a.exponent), rounding);
     }
   }
   return round(create(a.significand + b.significand, a.exponent), rounding);
@@ -354,10 +364,8 @@ function compare(a, b) {
   if (differenceOfLogarithms != 0) {
     return a.significand < 0n && b.significand < 0n ? (differenceOfLogarithms > 0 ? -1 : +1) : (differenceOfLogarithms < 0 ? -1 : +1);
   }
-  //const exponent = bigIntMax(a.exponent, b.exponent);
-  const exponent = a.exponent < b.exponent ? b.exponent : a.exponent;
-  const x = bigIntScale(a.significand, diff(exponent, b.exponent));
-  const y = bigIntScale(b.significand, diff(exponent, a.exponent));
+  const x = a.exponent <= b.exponent ? a.significand : bigIntScale(a.significand, diff(a.exponent, b.exponent));
+  const y = b.exponent <= a.exponent ? b.significand : bigIntScale(b.significand, diff(b.exponent, a.exponent));
   return x < y ? -1 : (x > y ? +1 : 0);
 }
 BigDecimal.lessThan = function (a, b) {
@@ -394,7 +402,7 @@ BigDecimal.prototype.toString = function () {
   }
   const getSignificand = function (a, log10) {
     const s = BigDecimal.divide(a, exponentiate(BigDecimal.BigDecimal(10), log10));
-    let m = BigDecimal.BigDecimal(Math.pow(10, 15));
+    let m = BigDecimal.BigDecimal(10**15);
     while (!BigDecimal.equal(BigDecimal.round(BigDecimal.multiply(s, m), {maximumFractionDigits: 0, roundingMode: "half-even"}), BigDecimal.multiply(s, m))) {
       m = BigDecimal.multiply(m, m);
     }
@@ -402,8 +410,8 @@ BigDecimal.prototype.toString = function () {
   };
   const e = getCountOfDigits(x);
   const significand = getSignificand(x, e);
-  if (!BigDecimal.greaterThan(BigDecimal.divide(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(10n**6n)), x) &&
-      BigDecimal.lessThan(x, BigDecimal.BigDecimal(10n**21n))) {
+  if (!BigDecimal.greaterThan(BigDecimal.divide(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(10**6)), x) &&
+      BigDecimal.lessThan(x, BigDecimal.BigDecimal(10**21))) {
     return sign + bigDecimalToPlainString(significand, Number(e - BigInt(significand.length)), 0, 0);
   }
   return sign + bigDecimalToPlainString(significand, -(significand.length - 1), 0, 0) + "e" + (e - 1n >= 0n ? "+" : "") + (e - 1n).toString();
@@ -610,7 +618,7 @@ function significandDigits(a) {
 
 function getExponent(number) {
   const e = Math.floor(Math.log(Math.abs(number)) / Math.log(2)) - 1;
-  return Math.abs(number) / Math.pow(2, e) >= 2 ? e + 1 : e;
+  return Math.abs(number) / 2**e >= 2 ? e + 1 : e;
 }
 
 
@@ -643,22 +651,22 @@ function tryToMakeCorrectlyRounded(specialValue, f, name) {
       }
       i += 1;
       const internalRounding = {
-        maximumSignificantDigits: Math.ceil(Math.max(rounding.maximumSignificantDigits || (rounding.maximumFractionDigits + 1 + getExpectedResultIntegerDigits(x) - 1), significandDigits(x)) * Math.cbrt(Math.pow(2, i - 1))) + 2 + (BASE === 2 ? 1 : 0),
+        maximumSignificantDigits: Math.ceil(Math.max(rounding.maximumSignificantDigits || (rounding.maximumFractionDigits + 1 + getExpectedResultIntegerDigits(x) - 1), significandDigits(x)) * Math.cbrt(2**(i - 1))) + 2 + (BASE === 2 ? 1 : 0),
         roundingMode: "half-even"
       };
       result = undefined;
       if (internalRounding.maximumSignificantDigits <= Math.log2((Number.MAX_SAFE_INTEGER + 1) / 4) / Math.log2(BASE) && significandDigits(x) < Math.log2(Number.MAX_SAFE_INTEGER + 1) && BASE === 2) {
         // Hm... https://www.gnu.org/software/libc/manual/html_node/Errors-in-Math-Functions.html
-        const v = Number(x.significand) * Math.pow(BASE, Number(x.exponent));
+        const v = Number(x.significand) * BASE**Number(x.exponent);
         const numberValue = Math[name](v);
         if (name !== "sin" && name !== "cos" && name !== "tan" || Math.abs(numberValue) < Math.PI / 4) {
           const MIN_NORMALIZED_VALUE = (Number.MIN_VALUE * 1.25 > Number.MIN_VALUE ? Number.MIN_VALUE : Number.MIN_VALUE * (Number.MAX_SAFE_INTEGER + 1) / 2) || 2**-1022;
           const a = Math.abs(numberValue);
           if (a < 1/0 && a > MIN_NORMALIZED_VALUE) {
             const e = getExponent(a);
-            const s = numberValue / Math.pow(2, e);
+            const s = numberValue / 2**e;
             const e1 = getExponent(Number.MAX_SAFE_INTEGER + 1) - 1;
-            result = create(BigInt(s * Math.pow(2, e1)), BigInt(e - e1));//TODO: ?
+            result = create(BigInt(s * 2**e1), BigInt(e - e1));//TODO: ?
           }
         }
       }

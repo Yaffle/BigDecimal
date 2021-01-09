@@ -96,7 +96,7 @@ Results of running the benchmark from https://github.com/munsocket/jampary#early
 | Jampary      | 204 ms  |
 | BigNumberJs  | 263 ms  |
 | DecimalJs    | 424 ms  |
-| BigFloat     | 73 ms   |
-| BigDecimal   | 322 ms  |
+| BigFloat     | 85 ms   |
+| BigDecimal   | 135 ms  |
 | BigJs        | 3403 ms |
 | BigFloat32   | 158 ms  |

@@ -372,6 +372,9 @@ console.timeEnd();
 
 
 var roundNumber = function (number, precision) {
+  if (Math.abs(number) * 2**53 === 1/0) {
+    return roundNumber(number / 2**53, precision) * 2**53;
+  }
   var v = number * 2**(53-precision);
   return v - (v - number);//?
 };
@@ -382,11 +385,13 @@ for (var c = 0; c < 1000; c += 1) {
   //var number = 2;
   //var number = -2.05986225550976e+168;
   //var number = Number.MAX_VALUE;
+  //var number = 687.66796875;
   //debugger;
   if (number !== 0 && !Number.isNaN(number)) {
     var bigfloat = BigFloat.BigFloat(number);
     var f = 'sin cos atan exp log'.split(' ')[Math.floor(Math.random() * 5)];
-    //f = 'cos';
+    //var f = 'exp';
+    //var f = 'cos';
     var value = Math[f](number);
     if (Math.abs(value) > 0 && Math.abs(value) < 1/0) {
       if (f !== 'log' || number > 0) {
