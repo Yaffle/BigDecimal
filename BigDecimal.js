@@ -367,10 +367,22 @@ function compare(a, b) {
   if (a.significand >= 0n && b.significand <= 0n) {
     return (a.significand === 0n && b.significand === 0n) ? 0 : +1;
   }
+if (BASE !== 2) {
   const differenceOfLogarithms = Number(sum(diff(a.exponent, b.exponent), (digits(a.significand) - digits(b.significand))));
   if (differenceOfLogarithms !== 0) {
     return a.significand < 0n && b.significand < 0n ? (differenceOfLogarithms > 0 ? -1 : +1) : (differenceOfLogarithms < 0 ? -1 : +1);
   }
+} else {
+  const x = a.exponent >= b.exponent ? a.significand : a.significand >> BigInt(diff(b.exponent, a.exponent));
+  const y = b.exponent >= a.exponent ? b.significand : b.significand >> BigInt(diff(a.exponent, b.exponent));
+  if (x < y) {
+    return -1;
+  }
+  if (y < x) {
+    return +1;
+  }
+  //return x < y ? -1 : (x > y ? +1 : 0);
+}
   const x = a.exponent <= b.exponent ? a.significand : bigIntScale(a.significand, diff(a.exponent, b.exponent));
   const y = b.exponent <= a.exponent ? b.significand : bigIntScale(b.significand, diff(b.exponent, a.exponent));
   return x < y ? -1 : (x > y ? +1 : 0);
