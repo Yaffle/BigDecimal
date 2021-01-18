@@ -166,24 +166,36 @@ function normalize(a, rounding) {
   }
   return a;
 }
-let last = 0;
-let lastValue = 0n;
+let cache = {};
+let cacheSize = 0;
 function cachedBigInt(k) {
   // k === maximumFractionDigits
-  if (last !== k) {
-    last = k;
+  var lastValue = cache[k];
+  if (lastValue == null) {
+    if (cacheSize > 10) {
+      cache = {};
+      cacheSize = 0;
+    }
     lastValue = BigInt(k);
+    cache[k] = lastValue;
+    cacheSize += 1;
   }
   return lastValue;
 }
-let lastExponent = 0;
-let lastPower = 1n;
+let cache2 = {};
+let cache2Size = 0;
 function cachedPower(k) {
-  if (lastExponent !== k) {
-    lastExponent = k;
-    lastPower = BIGINT_BASE**cachedBigInt(k);
+  var lastValue = cache2[k];
+  if (lastValue == null) {
+    if (cache2Size > 10) {
+      cache2 = {};
+      cache2Size = 0;
+    }
+    lastValue = BIGINT_BASE**BigInt(k);
+    cache2[k] = lastValue;
+    cache2Size += 1;
   }
-  return lastPower;
+  return lastValue;
 }
 function round(a, rounding) {
   if (rounding != null) {
@@ -235,7 +247,7 @@ function round(a, rounding) {
           }
         }
       } else {
-        const divisor = BIGINT_BASE**BigInt(k);
+        const divisor = BASE === 2 ? 1n << cachedBigInt(k) : cachedPower(k);
         quotient = dividend / divisor;
         let twoRemainders = (dividend - divisor * quotient) * 2n;
         if (twoRemainders !== 0n) {
@@ -296,7 +308,7 @@ BigDecimal.multiply = function (a, b, rounding = null) {
   return normalize(round(create(a.significand * b.significand, sum(a.exponent, b.exponent)), rounding), rounding);
 };
 function bigIntScale(a, scaling) {
-  return (BASE === 2 ? (a << BigInt(scaling)) : BIGINT_BASE**BigInt(scaling) * a);
+  return (BASE === 2 ? (a << cachedBigInt(scaling)) : cachedPower(scaling) * a);
 }
 BigDecimal.divide = function (a, b, rounding = null) {
   if (a.significand === 0n) {
@@ -373,8 +385,8 @@ if (BASE !== 2) {
     return a.significand < 0n && b.significand < 0n ? (differenceOfLogarithms > 0 ? -1 : +1) : (differenceOfLogarithms < 0 ? -1 : +1);
   }
 } else {
-  const x = a.exponent >= b.exponent ? a.significand : a.significand >> BigInt(diff(b.exponent, a.exponent));
-  const y = b.exponent >= a.exponent ? b.significand : b.significand >> BigInt(diff(a.exponent, b.exponent));
+  const x = a.exponent >= b.exponent ? a.significand : a.significand >> cachedBigInt(diff(b.exponent, a.exponent));
+  const y = b.exponent >= a.exponent ? b.significand : b.significand >> cachedBigInt(diff(a.exponent, b.exponent));
   if (x < y) {
     return -1;
   }
