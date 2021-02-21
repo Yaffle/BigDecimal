@@ -1,5 +1,9 @@
 /*jslint bigint: true, vars: true, indent: 2*/
 
+// https://github.com/tc39/proposal-decimal
+// https://en.wikipedia.org/wiki/Floating-point_arithmetic
+// https://en.wikipedia.org/wiki/Fixed-point_arithmetic
+
 // Usage:
 // BigDecimal.BigDecimal(bigint)
 // BigDecimal.BigDecimal(string)
@@ -172,7 +176,7 @@ function cachedBigInt(k) {
   // k === maximumFractionDigits
   var lastValue = cache[k];
   if (lastValue == null) {
-    if (cacheSize > 10) {
+    if (cacheSize > 100) {
       cache = {};
       cacheSize = 0;
     }
@@ -385,6 +389,7 @@ if (BASE !== 2) {
     return a.significand < 0n && b.significand < 0n ? (differenceOfLogarithms > 0 ? -1 : +1) : (differenceOfLogarithms < 0 ? -1 : +1);
   }
 } else {
+  //TODO: remove when bitLength is fast
   const x = a.exponent >= b.exponent ? a.significand : a.significand >> cachedBigInt(diff(b.exponent, a.exponent));
   const y = b.exponent >= a.exponent ? b.significand : b.significand >> cachedBigInt(diff(a.exponent, b.exponent));
   if (x < y) {
@@ -450,7 +455,11 @@ BigDecimal.prototype.toString = function () {
 
 function bigDecimalToPlainString(significand, exponent, minFraction, minSignificant) {
   let e = exponent + significand.length - 1;
-  significand = significand.replace(/0+$/g, "");
+  let i = significand.length - 1;
+  while (i >= 0 && significand.charCodeAt(i) === '0'.charCodeAt(0)) {
+    i -= 1;
+  }
+  significand = significand.slice(0, i + 1);
   const zeros = Math.max(0, Math.max(e + 1, minSignificant) - significand.length);
   if (e <= -1) {
     significand = "0".repeat(0 - e) + significand;
@@ -477,7 +486,7 @@ function toExponential(significand, exponent, minFraction) {
 }
 
 BigDecimal.prototype.toFixed = function (fractionDigits, roundingMode = "half-up") {
-  const value = BigDecimal.multiply(this, BigDecimal.BigDecimal(10n**BigInt(fractionDigits)));
+  const value = BigDecimal.multiply(BigDecimal.BigDecimal(10n**BigInt(fractionDigits)), this);
   const sign = BigDecimal.lessThan(value, BigDecimal.BigDecimal(0)) ? "-" : "";
   const rounded = BigDecimal.round(value, {maximumFractionDigits: 0, roundingMode: roundingMode});
   const a = abs(rounded);
@@ -671,7 +680,7 @@ function tryToMakeCorrectlyRounded(specialValue, f, name) {
   // (?) https://en.wikipedia.org/wiki/Rounding#Table-maker's_dilemma
   return function (x, rounding) {
     if (BigDecimal.equal(x, BigDecimal.BigDecimal(specialValue))) {
-      return f(x, rounding);
+      return f(x, {maximumSignificantDigits: 1, roundingMode: 'half-even'});
     }
     let result = BigDecimal.BigDecimal(0);
     let i = 0;
@@ -688,7 +697,8 @@ function tryToMakeCorrectlyRounded(specialValue, f, name) {
       result = undefined;
       if (internalRounding.maximumSignificantDigits <= Math.log2((Number.MAX_SAFE_INTEGER + 1) / 4) / Math.log2(BASE) && significandDigits(x) < Math.log2(Number.MAX_SAFE_INTEGER + 1) && BASE === 2) {
         // Hm... https://www.gnu.org/software/libc/manual/html_node/Errors-in-Math-Functions.html
-        const v = Number(x.significand) * BASE**Number(x.exponent);
+        const exponent = Number(x.exponent);
+        const v = Number(x.significand) * BASE**exponent;
         const numberValue = Math[name](v);
         if (name !== "sin" && name !== "cos" && name !== "tan" || Math.abs(numberValue) < Math.PI / 4) {
           const MIN_NORMALIZED_VALUE = (Number.MIN_VALUE * 1.25 > Number.MIN_VALUE ? Number.MIN_VALUE : Number.MIN_VALUE * (Number.MAX_SAFE_INTEGER + 1) / 2) || 2**-1022;
@@ -780,7 +790,7 @@ BigDecimal.exp = tryToMakeCorrectlyRounded(0, function exp(x, rounding) {
     roundingMode: "half-even"
   };
   if (!BigDecimal.equal(x, BigDecimal.BigDecimal(0))) {
-    const logBASEApproximate = BigDecimal.divide(BigDecimal.BigDecimal(Math.log(BASE) * (Number.MAX_SAFE_INTEGER + 1)), BigDecimal.BigDecimal(Number.MAX_SAFE_INTEGER + 1), internalRounding);
+    const logBASEApproximate = BigDecimal.divide(BigDecimal.BigDecimal(Math.log(BASE) * (Number.MAX_SAFE_INTEGER + 1)), BigDecimal.add(BigDecimal.BigDecimal(Number.MAX_SAFE_INTEGER), BigDecimal.BigDecimal(1)), internalRounding);
     const kApproximate = BigDecimal.round(BigDecimal.divide(x, logBASEApproximate, {maximumSignificantDigits: Math.max(Number(getCountOfDigits(x)), 1), roundingMode: "half-even"}), {maximumFractionDigits: 0, roundingMode: "half-even"});
     if (!BigDecimal.equal(kApproximate, BigDecimal.BigDecimal(0))) {
       const logBASE = BigDecimal.log(BigDecimal.BigDecimal(BASE), {maximumSignificantDigits: internalRounding.maximumSignificantDigits + Number(getCountOfDigits(kApproximate)), roundingMode: "half-even"});
@@ -808,7 +818,7 @@ function divideByHalfOfPI(x, rounding) { // x = k*pi/2 + r + 2*pi*n, where |r| <
   if (BigDecimal.lessThan(x, BigDecimal.BigDecimal(0))) {
     throw new RangeError();
   }
-  if (BigDecimal.greaterThan(x, BigDecimal.divide(BigDecimal.BigDecimal(Math.floor(Math.PI / 4 * (Number.MAX_SAFE_INTEGER + 1) + 0.5)), BigDecimal.BigDecimal(Number.MAX_SAFE_INTEGER + 1), rounding))) {
+  if (BigDecimal.greaterThan(x, BigDecimal.divide(BigDecimal.BigDecimal(Math.floor(Math.PI / 4 * (Number.MAX_SAFE_INTEGER + 1) + 0.5)), BigDecimal.add(BigDecimal.BigDecimal(Number.MAX_SAFE_INTEGER), BigDecimal.BigDecimal(1)), rounding))) {
     const halfOfPi = BigDecimal.multiply(BigDecimal.BigDecimal(2), BigDecimal.atan(BigDecimal.BigDecimal(1), {maximumSignificantDigits: rounding.maximumSignificantDigits + Number(getCountOfDigits(x)) + 1, roundingMode: "half-even"}));
     const i = BigDecimal.round(BigDecimal.divide(x, halfOfPi, {maximumSignificantDigits: Math.max(Number(getCountOfDigits(x)), 1), roundingMode: "half-even"}), {maximumFractionDigits: 0, roundingMode: "half-even"});
     const remainder = BigDecimal.subtract(x, BigDecimal.multiply(i, halfOfPi));

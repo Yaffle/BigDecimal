@@ -106,6 +106,7 @@ console.assert(BigDecimal.add(BigDecimal.BigDecimal('1e+9000000000000000'), BigD
 //console.assert(BigDecimal.divide(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(10), {maximumFractionDigits: 1e15}).toString(), '?'); // performance
 //console.assert(BigDecimal.exp(BigDecimal.BigDecimal('1e+100'), { maximumSignificantDigits: 1, roundingMode: 'half-even' }).toString() === '2e+4342944819032518276511289189166050822943970058036665661144537831658646492088707747292249493384317483');
 //console.assert(BigDecimal.exp(BigDecimal.BigDecimal('-1e+100'), { maximumSignificantDigits: 1, roundingMode: 'half-even' }).toString() === '7e-4342944819032518276511289189166050822943970058036665661144537831658646492088707747292249493384317484');
+console.assert(BigDecimal.exp(BigDecimal.BigDecimal(0), {maximumFractionDigits: 0, roundingMode: 'half-even'}));
 
 // fromString
 //console.assert(BigDecimal.BigDecimal(' +1.2e+3 ').toString() === '120');
@@ -305,46 +306,55 @@ globalThis.BigDecimal = BigDecimal;
 // 10 digits, 1000 digits
 // atan, exp
 
-console.time('10 digits of π × 1000');
-for (var i = 0; i < 1000; i += 1) {
-  var pi = BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), { maximumSignificantDigits: 10, roundingMode: 'half-even' }));
-  console.assert(pi.toString() === '3.1415926536');
-}
-console.timeEnd('10 digits of π × 1000');
+const someBenchmarks = function (BigDecimal, BASE) {
 
-console.time('1000 digits of π');
-var pi = BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), { maximumSignificantDigits: 1000, roundingMode: 'half-even' }));
-console.timeEnd('1000 digits of π');
-console.log(pi.toString());
+  const sd = function (decimalSignificantDigits) {
+    return Math.ceil(decimalSignificantDigits * (Math.log2(10) / Math.log2(BASE))) + (BASE !== 10 ? 2 : 0);
+  };
 
-console.time('10 digits of ℯ × 1000');
-for (var i = 0; i < 1000; i += 1) {
-  var e = BigDecimal.exp(BigDecimal.BigDecimal(1), { maximumSignificantDigits: 10, roundingMode: 'half-even' });
-  console.assert(e.toString() === '2.718281828');
-}
-console.timeEnd('10 digits of ℯ × 1000');
+  console.time('10 digits of π × 1000');
+  for (var i = 0; i < 1000; i += 1) {
+    var pi = BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), { maximumSignificantDigits: sd(10), roundingMode: 'half-even' }));
+    console.assert(pi.toFixed(10 - 1) === '3.141592654');
+  }
+  console.timeEnd('10 digits of π × 1000');
 
-console.time('1000 digits of ℯ');
-var e = BigDecimal.exp(BigDecimal.BigDecimal(1), { maximumSignificantDigits: 1000, roundingMode: 'half-even' });
-console.timeEnd('1000 digits of ℯ');
-console.log(e.toString());
+  console.time('1000 digits of π');
+  var pi = BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), { maximumSignificantDigits: sd(1000), roundingMode: 'half-even' }));
+  console.timeEnd('1000 digits of π');
+  console.log(pi.toFixed(1000 - 1));
 
-console.time('10 digits of ln(2) × 1000');
-for (var i = 0; i < 1000; i += 1) {
-  var e = BigDecimal.log(BigDecimal.BigDecimal(2), { maximumSignificantDigits: 10, roundingMode: 'half-even' });
-  console.assert(e.toString() === '0.6931471806');
-}
-console.timeEnd('10 digits of ln(2) × 1000');
+  console.time('10 digits of ℯ × 1000');
+  for (var i = 0; i < 1000; i += 1) {
+    var e = BigDecimal.exp(BigDecimal.BigDecimal(1), { maximumSignificantDigits: sd(10), roundingMode: 'half-even' });
+    console.assert(e.toFixed(9) === '2.718281828');
+  }
+  console.timeEnd('10 digits of ℯ × 1000');
 
-console.time('1000 digits of ln(2)');
-var e = BigDecimal.log(BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1000, roundingMode: 'half-even' });
-console.timeEnd('1000 digits of ln(2)');
-console.log(e.toString());
+  console.time('1000 digits of ℯ');
+  var e = BigDecimal.exp(BigDecimal.BigDecimal(1), { maximumSignificantDigits: sd(1000), roundingMode: 'half-even' });
+  console.timeEnd('1000 digits of ℯ');
+  console.log(e.toFixed(1000 - 1));
 
-console.time('1000 digits of ln(2) using BigFloat');
-var e = BigFloat.log(BigFloat.BigFloat(2), { maximumSignificantDigits: Math.ceil(1000 * Math.log2(10)), roundingMode: 'half-even' });
-console.timeEnd('1000 digits of ln(2) using BigFloat');
-console.log(e.toFixed(1000));
+  console.time('10 digits of ln(2) × 1000');
+  for (var i = 0; i < 1000; i += 1) {
+    var ln2 = BigDecimal.log(BigDecimal.BigDecimal(2), { maximumSignificantDigits: sd(10), roundingMode: 'half-even' });
+    console.assert(ln2.toFixed(10) === '0.6931471806');
+  }
+  console.timeEnd('10 digits of ln(2) × 1000');
+
+  console.time('1000 digits of ln(2)');
+  var ln2 = BigDecimal.log(BigDecimal.BigDecimal(2), { maximumSignificantDigits: sd(1000), roundingMode: 'half-even' });
+  console.timeEnd('1000 digits of ln(2)');
+  console.log(ln2.toFixed(1000));
+
+};
+
+console.log('%cUsing BigDecimal:', 'font-weight: bold');
+someBenchmarks(BigDecimal, 10);
+console.log('%cUsing BigFloat:', 'font-weight: bold');
+someBenchmarks(BigFloat, 2);
+
 globalThis.BigFloat = BigFloat;
 
 console.assert(BigFloat.divide(BigFloat.BigFloat(49151), BigFloat.BigFloat(2**15)).toPrecision(1) === '1');
