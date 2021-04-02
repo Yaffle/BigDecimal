@@ -546,7 +546,8 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
     return {significand: "0", exponent: 0n};
   }
   const ten = BigDecimal.BigDecimal(10);
-  let rounding = {maximumSignificantDigits: 8, roundingMode: "half-even"};
+  const minimumSignificantDigits = Math.pow(2, Math.ceil(Math.log2(bitLength(bigIntAbs(BigInt(value.exponent)) + 1n) / Math.log2(BASE))))
+  let rounding = {maximumSignificantDigits: Math.max(minimumSignificantDigits, 8), roundingMode: "half-even"};
   let result = undefined;
   let fd = 0n;
   do {
@@ -699,8 +700,8 @@ function tryToMakeCorrectlyRounded(specialValue, f, name) {
         // Hm... https://www.gnu.org/software/libc/manual/html_node/Errors-in-Math-Functions.html
         const exponent = Number(x.exponent);
         const v = Number(x.significand) * BASE**exponent;
-        const numberValue = Math[name](v);
-        if (name !== "sin" && name !== "cos" && name !== "tan" || Math.abs(numberValue) < Math.PI / 4) {
+        if ((name !== "sin" && name !== "cos" && name !== "tan") || Math.abs(v) <= Math.PI / 4) {
+          const numberValue = Math[name](v);
           const MIN_NORMALIZED_VALUE = (Number.MIN_VALUE * 1.25 > Number.MIN_VALUE ? Number.MIN_VALUE : Number.MIN_VALUE * (Number.MAX_SAFE_INTEGER + 1) / 2) || 2**-1022;
           const a = Math.abs(numberValue);
           if (a < 1/0 && a > MIN_NORMALIZED_VALUE) {
@@ -929,4 +930,4 @@ BigDecimal.atan = tryToMakeCorrectlyRounded(0, function (x, rounding) {
 const BigDecimal = factory(10);
 const BigFloat = factory(2);
 
-export {BigDecimal, BigFloat}
+export {BigDecimal, BigFloat};
