@@ -208,16 +208,15 @@ console.assert(BigDecimal.atan(BigDecimal.BigDecimal(0), { maximumSignificantDig
 console.assert(BigDecimal.atan(BigDecimal.BigDecimal(0), { maximumSignificantDigits: 16, roundingMode: 'floor' }).toString() === '0');
 console.assert(BigDecimal.equal(BigDecimal.atan(BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 16, roundingMode: 'half-even' }), BigDecimal.unaryMinus(BigDecimal.atan(BigDecimal.BigDecimal(2), { maximumSignificantDigits: 16, roundingMode: 'half-even' }))));
 console.assert(BigDecimal.equal(BigDecimal.atan(BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 16, roundingMode: 'floor' }), BigDecimal.unaryMinus(BigDecimal.atan(BigDecimal.BigDecimal(2), { maximumSignificantDigits: 16, roundingMode: 'ceil' }))));
+console.assert(BigDecimal.atan(BigDecimal.BigDecimal('1.2013940941022994e+0'), { maximumSignificantDigits: 131, roundingMode: 'floor'}).toString() === '0.87662900911742523254158833425786381859637058696571583555234526689495460168293167698711440831010322876710017353790080996006194244976'); // bug
 
 //BigDecimal2
 
 // random tests:
 
 for (var c = 0; c < 10000; c += 1) {
-  var aValue = ((1 + Math.random()) + 'e+' + (Math.floor(Math.random() * 20) - 10)).replace(/\+\-/g, '-');
-  var bValue = ((1 + Math.random()) + 'e+' + (Math.floor(Math.random() * 20) - 10)).replace(/\+\-/g, '-');
-  var a = BigDecimal.BigDecimal(aValue);
-  var b = BigDecimal.BigDecimal(bValue);
+  var aValue = ((-1 + 2 * Math.random()) + 'e+' + (Math.floor(Math.random() * 20) - 10)).replace(/\+\-/g, '-');
+  var bValue = ((-1 + 2 * Math.random()) + 'e+' + (Math.floor(Math.random() * 20) - 10)).replace(/\+\-/g, '-');
   var operations = 'add subtract multiply divide log exp sin cos atan'.split(' ');
   var operation = operations[Math.floor(Math.random() * operations.length)];
   //var roundingType = Math.random() < 0.5 ? 'maximumSignificantDigits' : 'maximumFractionDigits';
@@ -225,19 +224,25 @@ for (var c = 0; c < 10000; c += 1) {
   var roundingModes = 'ceil floor half-even half-up half-down'.split(' ');
   var roundingMode = roundingModes[Math.floor(Math.random() * roundingModes.length)];
   var decimalDigits = Math.floor(Math.random() * 20);
-  var rounding = {
-    roundingMode: roundingMode,
-    maximumSignificantDigits: roundingType === 'maximumSignificantDigits' ? Math.max(1, decimalDigits) : undefined,
-    maximumFractionDigits: roundingType === 'maximumFractionDigits' ? Math.max(0, decimalDigits) : undefined
+  var rounding = roundingType === 'maximumSignificantDigits' ? {
+    maximumSignificantDigits: Math.max(1, decimalDigits),
+    roundingMode: roundingMode
+  } : roundingType === 'maximumFractionDigits' ? {
+    maximumFractionDigits: Math.max(0, decimalDigits),
+    roundingMode: roundingMode
+  } : null;
+  var isZero = function (s) {
+    return s.startsWith('0') && s.startsWith('0.');
   };
-  var zero = BigDecimal.BigDecimal('0');
-  if (operation === 'atan') {
-    aValue = '1';
-    a = BigDecimal.BigDecimal(1);
-  }
-  if ((operation !== 'divide' || !BigDecimal.equal(b, zero)) && (operation !== 'log' || BigDecimal.greaterThan(a, zero))) {
-    var cc = /^(log|exp|sin|cos|atan)$/.test(operation) ? BigDecimal[operation](a, rounding) : BigDecimal[operation](a, b, rounding);
-    var expected = /^(log|exp|sin|cos|atan)$/.test(operation) ? BigDecimal2[operation](BigDecimal2.BigDecimal(aValue), rounding) : BigDecimal2[operation](BigDecimal2.BigDecimal(aValue), BigDecimal2.BigDecimal(bValue), rounding);
+  if ((operation !== 'divide' || !isZero(bValue)) && (operation !== 'log' || !isZero(aValue) && !aValue.startsWith('-'))) {
+    var calc = function (BigDecimal) {
+      if (/^(log|exp|sin|cos|atan)$/.test(operation)) {
+        return BigDecimal[operation](BigDecimal.BigDecimal(aValue), rounding);
+      }
+      return BigDecimal[operation](BigDecimal.BigDecimal(aValue), BigDecimal.BigDecimal(bValue), rounding);
+    };
+    var cc = calc(BigDecimal);
+    var expected = calc(BigDecimal2);
     if (cc.exponent > 9000000000000000n) {
       cc = 'Infinity';
     }
@@ -245,7 +250,7 @@ for (var c = 0; c < 10000; c += 1) {
       cc = '0';
     }
     if (cc.toString() !== expected.toString()) {
-      console.log(cc.toString(), expected.toString());
+      console.log(cc.toString(), expected.toString(), aValue, bValue, operation, rounding);
       throw new Error(c);
     }
   }
@@ -361,9 +366,9 @@ console.assert(BigFloat.divide(BigFloat.BigFloat(49151), BigFloat.BigFloat(2**15
 console.assert(BigFloat.divide(BigFloat.BigFloat(13835058055282163711n), BigFloat.BigFloat(2n**63n)).toPrecision(1) === '1');
 console.assert(BigFloat.BigFloat(1).toPrecision(101) === '1.' + '0'.repeat(100));
 console.assert(BigFloat.BigFloat(46892389.03583745).toPrecision(34) === '46892389.03583744913339614868164063');
-console.assert(BigFloat.BigFloat(-9422.84286622639).toExponential(36) === "-9.422842866226390469819307327270507813e+3");
-console.assert(BigFloat.exp(BigFloat.BigFloat(710), { maximumSignificantDigits: 1, roundingMode: 'half-even' }).toPrecision(1) === "2e+308");
-console.assert(BigFloat.exp(BigFloat.BigFloat(-739), { maximumSignificantDigits: 9, roundingMode: 'half-even' }).toPrecision(4) === "1.139e-321");
+console.assert(BigFloat.BigFloat(-9422.84286622639).toExponential(36) === '-9.422842866226390469819307327270507813e+3');
+console.assert(BigFloat.exp(BigFloat.BigFloat(710), { maximumSignificantDigits: 1, roundingMode: 'half-even' }).toPrecision(1) === '2e+308');
+console.assert(BigFloat.exp(BigFloat.BigFloat(-739), { maximumSignificantDigits: 9, roundingMode: 'half-even' }).toPrecision(4) === '1.139e-321');
 
 
 console.time();

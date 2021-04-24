@@ -38,6 +38,11 @@ It can be compiled using https://www.npmjs.com/package/babel-plugin-transform-bi
 
 ## Math: (not in the spec)
 
+    BigDecimal.abs(a)
+    BigDecimal.sign(a)
+    BigDecimal.max(a, b)
+    BigDecimal.min(a, b)
+
     BigDecimal.log(a, rounding)
     BigDecimal.exp(a, rounding)
     BigDecimal.sin(a, rounding)
