@@ -1,6 +1,6 @@
 {
   "name": "@yaffle/bigdecimal",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "description": "Arbitrary precision decimal arithmetic library. Polyfill for decimal proposal. Implemented on the top of BigInt.",
   "main": "BigDecimal.js",
   "scripts": {
