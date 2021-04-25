@@ -197,6 +197,7 @@ console.assert(BigDecimal.cos(BigDecimal.BigDecimal(0), { maximumSignificantDigi
 console.assert(BigDecimal.cos(BigDecimal.BigDecimal(0), { maximumSignificantDigits: 16, roundingMode: 'floor' }).toString() === '1');
 console.assert(BigDecimal.cos(BigDecimal.BigDecimal('8e+9'), { maximumSignificantDigits: 9, roundingMode: 'floor' }).toString() === '-0.0930906136'); // bug
 console.assert(BigDecimal.cos(BigDecimal.BigDecimal('-10e-9'), {maximumSignificantDigits: 1, roundingMode: 'floor'}).toString() === '0.9');
+console.assert(BigDecimal.cos(BigDecimal.BigDecimal('0.7854188942630302e+1'), {maximumSignificantDigits: 11, roundingMode: "half-even"}).toString() === '-0.00020730865433');
 
 // BigDecimal.atan
 console.assert(BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), { maximumSignificantDigits: 16, roundingMode: 'half-even' })).toString() === '3.1415926535897932');
@@ -214,6 +215,7 @@ console.assert(BigDecimal.atan(BigDecimal.BigDecimal('1.2013940941022994e+0'), {
 
 // random tests:
 
+console.time('testing agains decimal.js');
 for (var c = 0; c < 10000; c += 1) {
   var aValue = ((-1 + 2 * Math.random()) + 'e+' + (Math.floor(Math.random() * 20) - 10)).replace(/\+\-/g, '-');
   var bValue = ((-1 + 2 * Math.random()) + 'e+' + (Math.floor(Math.random() * 20) - 10)).replace(/\+\-/g, '-');
@@ -223,7 +225,7 @@ for (var c = 0; c < 10000; c += 1) {
   var roundingType = 'maximumSignificantDigits';
   var roundingModes = 'ceil floor half-even half-up half-down'.split(' ');
   var roundingMode = roundingModes[Math.floor(Math.random() * roundingModes.length)];
-  var decimalDigits = Math.floor(Math.random() * 20);
+  var decimalDigits = Math.floor(Math.random() * 200);
   var rounding = roundingType === 'maximumSignificantDigits' ? {
     maximumSignificantDigits: Math.max(1, decimalDigits),
     roundingMode: roundingMode
@@ -255,6 +257,7 @@ for (var c = 0; c < 10000; c += 1) {
     }
   }
 }
+console.timeEnd('testing agains decimal.js');
 
 function random(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -279,6 +282,7 @@ function bigdecimalFromNumber(number) {
   return BigDecimal.multiply(sign, BigDecimal.multiply(decimal, scale));
 }
 
+console.time('testing Number#toLocaleString');
 for (var c = 0; c < 10000; c += 1) {
   var number = randomNumber();
   //var bigdecimal = bigdecimalFromNumber(number);
@@ -301,6 +305,7 @@ for (var c = 0; c < 10000; c += 1) {
     throw new RangeError(number);
   }
 }
+console.timeEnd('testing Number#toLocaleString');
 
 console.timeEnd();
 console.log('ok');
@@ -369,10 +374,13 @@ console.assert(BigFloat.BigFloat(46892389.03583745).toPrecision(34) === '4689238
 console.assert(BigFloat.BigFloat(-9422.84286622639).toExponential(36) === '-9.422842866226390469819307327270507813e+3');
 console.assert(BigFloat.exp(BigFloat.BigFloat(710), { maximumSignificantDigits: 1, roundingMode: 'half-even' }).toPrecision(1) === '2e+308');
 console.assert(BigFloat.exp(BigFloat.BigFloat(-739), { maximumSignificantDigits: 9, roundingMode: 'half-even' }).toPrecision(4) === '1.139e-321');
+console.assert(BigFloat.BigFloat(9.478349671985029e+100).toExponential(0) === '9e+100'); // bug
+console.assert(BigFloat.BigFloat(9.5e+307).toExponential(0) === '9e+307');
+console.assert(BigFloat.BigFloat(-9.460115477371994e+122).toExponential(0) === '-9e+122'); // bug
 
 
-console.time();
-for (var c = 0; c < 10000; c += 1) {
+console.time('BigFloat#toExponential');
+for (var c = 0; c < 100000; c += 1) {
   var number = randomNumber();
   var bigfloat = BigFloat.BigFloat(number);
   var n = random(0, 100);
@@ -382,7 +390,7 @@ for (var c = 0; c < 10000; c += 1) {
   console.assert(bigfloat.toExponential(n) === number.toExponential(n), number, n, bigfloat.toExponential(n), number.toExponential(n));
   console.assert(bigfloat.toPrecision(Math.min(n + 1, 100)) === number.toPrecision(Math.min(n + 1, 100)), number);
 }
-console.timeEnd();
+console.timeEnd('BigFloat#toExponential');
 // default: 6836.679931640625 ms
 
 
@@ -394,8 +402,8 @@ var roundNumber = function (number, precision) {
   return v - (v - number);//?
 };
 
-console.time();
-for (var c = 0; c < 1000; c += 1) {
+console.time('Math for small values');
+for (var c = 0; c < 10000; c += 1) {
   var number = roundNumber(randomNumber(), 18);
   //var number = 2;
   //var number = -2.05986225550976e+168;
@@ -408,7 +416,7 @@ for (var c = 0; c < 1000; c += 1) {
     //var f = 'exp';
     //var f = 'cos';
     var value = Math[f](number);
-    if (Math.abs(value) > 0 && Math.abs(value) < 1/0) {
+    if (Math.abs(value) >= 2**-1022 && Math.abs(value) < 1/0) {
       if (f !== 'log' || number > 0) {
         var n = 20;
         var a = BigFloat[f](bigfloat, {maximumSignificantDigits: 18, roundingMode: 'half-even'}).toPrecision(n);
@@ -418,11 +426,11 @@ for (var c = 0; c < 1000; c += 1) {
     }
   }
 }
-console.timeEnd();
+console.timeEnd('Math for small values');
 
 console.time();
 var s = 0;
-for (var i = 0; i < 1000; i += 1) {
+for (var i = 0; i < 10000; i += 1) {
   s += Math.cos(Number(BigInt(i)));
   console.assert(s.toPrecision(20).length > 1);
 }
