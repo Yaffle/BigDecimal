@@ -380,7 +380,7 @@ console.assert(BigFloat.BigFloat(-9.460115477371994e+122).toExponential(0) === '
 
 
 console.time('BigFloat#toExponential');
-for (var c = 0; c < 100000; c += 1) {
+for (var c = 0; c < 10000; c += 1) {
   var number = randomNumber();
   var bigfloat = BigFloat.BigFloat(number);
   var n = random(0, 100);
