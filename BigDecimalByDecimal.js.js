@@ -98,6 +98,14 @@ BigDecimal.atan = function (a, rounding) {
   setRounding(rounding);
   return a.atan();
 };
+BigDecimal.sqrt = function (a, rounding) {
+  setRounding(rounding);
+  return a.sqrt();
+};
+BigDecimal.cbrt = function (a, rounding) {
+  setRounding(rounding);
+  return a.cbrt();
+};
 
 BigDecimal.round = function (a, rounding) {
   if (rounding.maximumFractionDigits != undefined) {

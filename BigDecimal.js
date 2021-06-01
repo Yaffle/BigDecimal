@@ -29,6 +29,8 @@
 // BigDecimal.sin(a, rounding)
 // BigDecimal.cos(a, rounding)
 // BigDecimal.atan(a, rounding)
+// BigDecimal.sqrt(a, rounding)
+// BigDecimal.cbrt(a, rounding)
 // "simple" Math functions:
 // BigDecimal.abs(a)
 // BigDecimal.sign(a)
@@ -561,7 +563,7 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
     return {significand: "0", exponent: 0n};
   }
   const ten = BigDecimal.BigDecimal(10);
-  const minimumSignificantDigits = Math.pow(2, Math.ceil(Math.log2(bitLength(bigIntAbs(BigInt(value.exponent)) + 1n) / Math.log2(BASE))))
+  const minimumSignificantDigits = Math.pow(2, Math.ceil(Math.log2(bitLength(bigIntAbs(BigInt(value.exponent)) + 1n) / Math.log2(BASE))));
   let rounding = {maximumSignificantDigits: Math.max(minimumSignificantDigits, 8), roundingMode: "half-even"};
   let result = undefined;
   let fd = 0n;
@@ -651,9 +653,9 @@ function significandDigits(a) {
   while (to - 1 > from) {
     const middle = from + Math.floor((to - from) / 2);
     if (!BigDecimal.equal(BigDecimal.round(a, {maximumSignificantDigits: middle, roundingMode: "half-even"}), a)) {
-      to = middle;
-    } else {
       from = middle;
+    } else {
+      to = middle;
     }
   }
   return to;
@@ -800,8 +802,10 @@ BigDecimal.exp = tryToMakeCorrectlyRounded(0, function exp(x, rounding) {
     if (!BigDecimal.equal(kApproximate, BigDecimal.BigDecimal(0))) {
       const logBASE = BigDecimal.log(BigDecimal.BigDecimal(BASE), {maximumSignificantDigits: internalRounding.maximumSignificantDigits + Number(getCountOfDigits(kApproximate)), roundingMode: "half-even"});
       const k = BigDecimal.round(BigDecimal.divide(x, logBASE, {maximumSignificantDigits: Math.max(Number(getCountOfDigits(x)), 1), roundingMode: "half-even"}), {maximumFractionDigits: 0, roundingMode: "half-even"});
-      const r = BigDecimal.subtract(x, BigDecimal.multiply(k, logBASE));
-      return BigDecimal.multiply(exponentiate(BASE, BigDecimal.toBigInt(k)), BigDecimal.exp(r, internalRounding));
+      if (!BigDecimal.equal(k, BigDecimal.BigDecimal(0))) {
+        const r = BigDecimal.subtract(x, BigDecimal.multiply(k, logBASE));
+        return BigDecimal.multiply(exponentiate(BASE, BigDecimal.toBigInt(k)), BigDecimal.exp(r, internalRounding));
+      }
     }
   }
   // https://en.wikipedia.org/wiki/Exponential_function#Computation
@@ -935,6 +939,47 @@ BigDecimal.atan = tryToMakeCorrectlyRounded(0, function (x, rounding) {
   }
   return BigDecimal.multiply(x, sum);
 }, "atan");
+
+function nthRoot(x, n, rounding) {
+  const exponentiateX = function (x, n) {
+    return n === 1 ? x : (n % 2 === 0 ? exponentiateX(BigDecimal.multiply(x, x), n / 2) : BigDecimal.multiply(x, exponentiate(x, n - 1)));
+  };
+  if (BigDecimal.lessThan(x, BigDecimal.BigDecimal(0))) {
+    if (n % 2 === 0) {
+      throw new RangeError();
+    }
+  }
+  if (BigDecimal.equal(x, BigDecimal.BigDecimal(0))) {
+    return x;
+  }
+  // https://en.wikipedia.org/wiki/Nth_root#Using_Newton's_method
+  const e = getCountOfDigits(x) / BigInt(n);
+  const t = exponentiate(BASE, e);
+  const y = BigDecimal.multiply(x, exponentiate(BASE, -(BigInt(n) * e)));
+  const k = Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1) / Math.log2(BASE)) - 1;
+  const xn = BigDecimal.toNumber(BigDecimal.round(BigDecimal.multiply(y, exponentiate(BASE, k)), {maximumFractionDigits: 0, roundingMode: 'half-even'})) / BASE**k;
+  const r = n === 2 ? Math.sqrt(xn) : (n === 3 ? Math.cbrt(xn) : Math.exp(Math.log(xn) / n));
+  const resultSignificantDigits = 8 * (rounding.maximumSignificantDigits || (rounding.maximumFractionDigits + Math.ceil(significandDigits(x) / n)) || 1);
+  let result = BigDecimal.multiply(BigDecimal.BigDecimal(Math.sign(r) * Math.floor(Math.abs(r) * BASE**k + 0.5)), exponentiate(BASE, -k));
+  const iteration = function (result, rounding) {
+    const resultInNm1 = exponentiateX(result, n - 1);
+    return BigDecimal.divide(BigDecimal.add(y, BigDecimal.multiply(BigDecimal.BigDecimal(n - 1), BigDecimal.multiply(result, resultInNm1))), BigDecimal.multiply(BigDecimal.BigDecimal(n), resultInNm1), rounding);
+  };
+  for (let i = Math.max(k - (n - 1), 1); i < resultSignificantDigits; i *= 2) {
+    const internalRounding = {maximumSignificantDigits: i, roundingMode: "half-even"};
+    result = iteration(result, internalRounding);
+  }
+  result = iteration(result, rounding);
+  return BigDecimal.multiply(result, t);
+}
+
+BigDecimal.sqrt = function (x, rounding) {
+  return nthRoot(x, 2, rounding);
+};
+
+BigDecimal.cbrt = function (x, rounding) {
+  return nthRoot(x, 3, rounding);
+};
 
   return BigDecimal;
 };
