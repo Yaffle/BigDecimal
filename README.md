@@ -49,6 +49,9 @@ It can be compiled using https://www.npmjs.com/package/babel-plugin-transform-bi
     BigDecimal.cos(a, rounding)
     BigDecimal.atan(a, rounding)
 
+    BigDecimal.sqrt(a, rounding)
+    BigDecimal.cbrt(a, rounding)
+
 The `rounding` argument may look like `{maximumFractionDigits: 10, roundingMode: "half-even"}` or `{maximumSignificantDigits: 10, roundingMode: "half-even"}`,
 where the `roundingMode` can be:
  * `"floor"`
