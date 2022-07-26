@@ -217,13 +217,6 @@ console.assert(BigDecimal.sqrt(BigDecimal.BigDecimal(100), {maximumFractionDigit
 console.assert(BigDecimal.sqrt(BigDecimal.BigDecimal('0.0022543340705052373e+1'), {maximumSignificantDigits: 133, roundingMode: 'floor'}).toString() === '0.1501443995127769426052976079792471072949865532195559797216663259395716567795895845959219116376275197595509976588342401869302170077707');
 console.assert(BigDecimal.sqrt(BigDecimal.BigDecimal('0.8064902266570342e+6'), {maximumSignificantDigits: 137, roundingMode: 'ceil'}).toString() === '898.04800910476618015029976392760697926908695002996368102408741467418735302842706678658172375120578579550953111677275701668340441136770143');
 
-// BigDecimal.cbrt
-console.assert(BigDecimal.cbrt(BigDecimal.BigDecimal(1000), {maximumFractionDigits: 0, roundingMode: 'floor'}).toString() === '10');
-console.assert(BigDecimal.cbrt(BigDecimal.BigDecimal(1000), {maximumFractionDigits: 0, roundingMode: 'ceil'}).toString() === '10');
-console.assert(BigDecimal.cbrt(BigDecimal.BigDecimal(-1000), {maximumFractionDigits: 0, roundingMode: 'floor'}).toString() === '-10');
-console.assert(BigDecimal.cbrt(BigDecimal.BigDecimal(-1000), {maximumFractionDigits: 0, roundingMode: 'ceil'}).toString() === '-10');
-console.assert(BigDecimal.cbrt(BigDecimal.BigDecimal('-0.10580501816456955e-1'), {maximumSignificantDigits: 5, roundingMode: 'ceil'}).toString() === '-0.21953');
-
 //BigDecimal2
 
 // random tests:
@@ -232,7 +225,7 @@ console.time('testing agains decimal.js');
 for (var c = 0; c < 10000; c += 1) {
   var aValue = ((-1 + 2 * Math.random()) + 'e+' + (Math.floor(Math.random() * 20) - 10)).replace(/\+\-/g, '-');
   var bValue = ((-1 + 2 * Math.random()) + 'e+' + (Math.floor(Math.random() * 20) - 10)).replace(/\+\-/g, '-');
-  var operations = 'add subtract multiply divide log exp sin cos atan sqrt cbrt'.split(' ');
+  var operations = 'add subtract multiply divide log exp sin cos atan sqrt'.split(' ');
   var operation = operations[Math.floor(Math.random() * operations.length)];
   //var roundingType = Math.random() < 0.5 ? 'maximumSignificantDigits' : 'maximumFractionDigits';
   var roundingType = 'maximumSignificantDigits';
@@ -253,7 +246,7 @@ for (var c = 0; c < 10000; c += 1) {
       (operation !== 'log' || !isZero(aValue) && !aValue.startsWith('-')) &&
       (operation !== 'sqrt' || !aValue.startsWith('-'))) {
     var calc = function (BigDecimal) {
-      if (/^(log|exp|sin|cos|atan|sqrt|cbrt)$/.test(operation)) {
+      if (/^(log|exp|sin|cos|atan|sqrt)$/.test(operation)) {
         return BigDecimal[operation](BigDecimal.BigDecimal(aValue), rounding);
       }
       return BigDecimal[operation](BigDecimal.BigDecimal(aValue), BigDecimal.BigDecimal(bValue), rounding);
