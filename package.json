@@ -4,7 +4,7 @@
   "description": "Arbitrary precision decimal arithmetic library. Polyfill for decimal proposal. Implemented on the top of BigInt.",
   "main": "BigDecimal.js",
   "scripts": {
-    "test": "node --experimental-modules tests.js"
+    "test": "node --experimental-modules test/test.js"
   },
   "repository": {
     "type": "git",
@@ -21,7 +21,7 @@
     "BigDecimal.js"
   ],
   "author": "Viktor Mukhachev",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/Yaffle/BigDecimal/issues"
   },

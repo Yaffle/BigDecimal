@@ -1,6 +1,6 @@
 
+import {BigDecimal, BigFloat} from '../BigDecimal.js';
 import BigDecimal2 from './BigDecimalByDecimal.js.js';
-import {BigDecimal, BigFloat} from './BigDecimal.js';
 
 console.time();
 
