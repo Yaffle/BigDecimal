@@ -409,7 +409,7 @@ function compare(a, b) {
   if (as >= 0n && bs <= 0n) {
     return (as === 0n && bs === 0n) ? 0 : +1;
   }
-if (BASE !== 2) {
+if (BASE !== 2 || d >= 9007199254740992 || d <= -9007199254740992) {
   const x = sum(bd, (digits(as) - digits(bs)));
   const differenceOfLogarithms = typeof x === 'number' ? x : Number(BigInt(x));
   if (differenceOfLogarithms !== 0) {

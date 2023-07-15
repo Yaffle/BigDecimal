@@ -386,6 +386,11 @@ console.assert(BigFloat.exp(BigFloat.BigFloat(-739), { maximumSignificantDigits:
 console.assert(BigFloat.BigFloat(9.478349671985029e+100).toExponential(0) === '9e+100'); // bug
 console.assert(BigFloat.BigFloat(9.5e+307).toExponential(0) === '9e+307');
 console.assert(BigFloat.BigFloat(-9.460115477371994e+122).toExponential(0) === '-9e+122'); // bug
+var a = BigFloat.exp(BigFloat.exp(BigFloat.BigFloat(711), {roundingMode: 'floor', maximumSignificantDigits: 1}), {roundingMode: 'floor', maximumSignificantDigits: 1});
+console.assert(BigFloat.greaterThan(a, BigFloat.BigFloat(1))); // bug
+console.assert(BigFloat.lessThan(BigFloat.BigFloat(1), a)); // bug
+console.assert(BigFloat.lessThan(BigFloat.unaryMinus(a), BigFloat.BigFloat(-1))); // bug
+console.assert(BigFloat.greaterThan(BigFloat.BigFloat(-1), BigFloat.unaryMinus(a))); // bug
 
 var x = BigFloat.log(BigFloat.BigFloat(8), {maximumSignificantDigits: 138, roundingMode: 'floor'});
 x = BigFloat.divide(x, BigFloat.BigFloat(4));
