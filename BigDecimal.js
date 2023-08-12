@@ -43,6 +43,7 @@
 const factory = function (BASE) {
 
   const BIGINT_BASE = BigInt(BASE);
+  const parseRegex = /^\s*([+\-])?(\d+)?\.?(\d+)?(?:e([+\-]?\d+))?\s*$/;
 
 function BigDecimal(significand, exponent) {
   this.significand = significand;
@@ -56,7 +57,7 @@ BigDecimal.BigFloat = BigDecimal.BigDecimal = function (value) {
     if (BASE !== 10) {
       throw new Error();
     }
-    const match = /^\s*([+\-])?(\d+)?\.?(\d+)?(?:e([+\-]?\d+))?\s*$/.exec(value);
+    const match = parseRegex.exec(value);
     if (match == null) {
       throw new RangeError(value);
     }
