@@ -8,6 +8,12 @@ function rm(roundingMode) {
   if (roundingMode === 'ceil') {
     return Decimal.ROUND_CEIL;
   }
+  if (roundingMode === 'up') {
+    return Decimal.ROUND_UP;
+  }
+  if (roundingMode === 'down') {
+    return Decimal.ROUND_DOWN;
+  }
   if (roundingMode === 'half-even') {
     return Decimal.ROUND_HALF_EVEN;
   }

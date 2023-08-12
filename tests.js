@@ -25,20 +25,40 @@ console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), B
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1, roundingMode: 'floor' })) === -2);
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 1, roundingMode: 'floor' })) === 1);
 
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1, roundingMode: 'down' })) === 1);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 1, roundingMode: 'down' })) === -1);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1, roundingMode: 'down' })) === -1);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 1, roundingMode: 'down' })) === 1);
+
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(2), { maximumFractionDigits: 0, roundingMode: 'floor' })) === 1);
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(-2), { maximumFractionDigits: 0, roundingMode: 'floor' })) === -2);
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(2), { maximumFractionDigits: 0, roundingMode: 'floor' })) === -2);
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(-2), { maximumFractionDigits: 0, roundingMode: 'floor' })) === 1);
+
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(2), { maximumFractionDigits: 0, roundingMode: 'down' })) === 1);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(-2), { maximumFractionDigits: 0, roundingMode: 'down' })) === -1);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(2), { maximumFractionDigits: 0, roundingMode: 'down' })) === -1);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(-2), { maximumFractionDigits: 0, roundingMode: 'down' })) === 1);
 
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1, roundingMode: 'ceil' })) === 2);
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 1, roundingMode: 'ceil' })) === -1);
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1, roundingMode: 'ceil' })) === -1);
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 1, roundingMode: 'ceil' })) === 2);
 
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1, roundingMode: 'up' })) === 2);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 1, roundingMode: 'up' })) === -2);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1, roundingMode: 'up' })) === -2);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 1, roundingMode: 'up' })) === 2);
+
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(2), { maximumFractionDigits: 0, roundingMode: 'ceil' })) === 2);
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(-2), { maximumFractionDigits: 0, roundingMode: 'ceil' })) === -1);
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(2), { maximumFractionDigits: 0, roundingMode: 'ceil' })) === -1);
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(-2), { maximumFractionDigits: 0, roundingMode: 'ceil' })) === 2);
+
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(2), { maximumFractionDigits: 0, roundingMode: 'up' })) === 2);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(-2), { maximumFractionDigits: 0, roundingMode: 'up' })) === -2);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(2), { maximumFractionDigits: 0, roundingMode: 'up' })) === -2);
+console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(-3), BigDecimal.BigDecimal(-2), { maximumFractionDigits: 0, roundingMode: 'up' })) === 2);
 
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1, roundingMode: 'half-even' })) === 2);
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 1, roundingMode: 'half-even' })) === -2);
@@ -221,7 +241,7 @@ console.assert(BigDecimal.sqrt(BigDecimal.BigDecimal('0.8064902266570342e+6'), {
 
 // random tests:
 
-console.time('testing agains decimal.js');
+console.time('testing against decimal.js');
 for (var c = 0; c < 10000; c += 1) {
   var aValue = ((-1 + 2 * Math.random()) + 'e+' + (Math.floor(Math.random() * 20) - 10)).replace(/\+\-/g, '-');
   var bValue = ((-1 + 2 * Math.random()) + 'e+' + (Math.floor(Math.random() * 20) - 10)).replace(/\+\-/g, '-');
@@ -229,7 +249,7 @@ for (var c = 0; c < 10000; c += 1) {
   var operation = operations[Math.floor(Math.random() * operations.length)];
   //var roundingType = Math.random() < 0.5 ? 'maximumSignificantDigits' : 'maximumFractionDigits';
   var roundingType = 'maximumSignificantDigits';
-  var roundingModes = 'ceil floor half-even half-up half-down'.split(' ');
+  var roundingModes = 'ceil floor up down half-even half-up half-down'.split(' ');
   var roundingMode = roundingModes[Math.floor(Math.random() * roundingModes.length)];
   var decimalDigits = Math.floor(Math.random() * 200);
   var rounding = roundingType === 'maximumSignificantDigits' ? {
@@ -240,7 +260,7 @@ for (var c = 0; c < 10000; c += 1) {
     roundingMode: roundingMode
   } : null;
   var isZero = function (s) {
-    return s.startsWith('0') && s.startsWith('0.');
+    return s.startsWith('0') && !s.startsWith('0.');
   };
   if ((operation !== 'divide' || !isZero(bValue)) &&
       (operation !== 'log' || !isZero(aValue) && !aValue.startsWith('-')) &&
@@ -265,7 +285,7 @@ for (var c = 0; c < 10000; c += 1) {
     }
   }
 }
-console.timeEnd('testing agains decimal.js');
+console.timeEnd('testing against decimal.js');
 
 
 function random(min, max) {
@@ -396,6 +416,15 @@ var x = BigFloat.log(BigFloat.BigFloat(8), {maximumSignificantDigits: 138, round
 x = BigFloat.divide(x, BigFloat.BigFloat(4));
 console.assert(BigFloat.exp(BigFloat.BigFloat(x), { maximumSignificantDigits: 138, roundingMode: 'floor' }).toFixed(2) === '1.68'); // bug (infinite loop)
 
+console.assert(BigFloat.toNumber(BigFloat.divide(BigFloat.BigFloat(3), BigFloat.BigFloat(2), { maximumSignificantDigits: 1, roundingMode: 'up' })) === 2);
+console.assert(BigFloat.toNumber(BigFloat.divide(BigFloat.BigFloat(3), BigFloat.BigFloat(-2), { maximumSignificantDigits: 1, roundingMode: 'up' })) === -2);
+console.assert(BigFloat.toNumber(BigFloat.divide(BigFloat.BigFloat(-3), BigFloat.BigFloat(2), { maximumSignificantDigits: 1, roundingMode: 'up' })) === -2);
+console.assert(BigFloat.toNumber(BigFloat.divide(BigFloat.BigFloat(-3), BigFloat.BigFloat(-2), { maximumSignificantDigits: 1, roundingMode: 'up' })) === 2);
+
+console.assert(BigFloat.toNumber(BigFloat.divide(BigFloat.BigFloat(3), BigFloat.BigFloat(2), { maximumSignificantDigits: 1, roundingMode: 'down' })) === 1);
+console.assert(BigFloat.toNumber(BigFloat.divide(BigFloat.BigFloat(3), BigFloat.BigFloat(-2), { maximumSignificantDigits: 1, roundingMode: 'down' })) === -1);
+console.assert(BigFloat.toNumber(BigFloat.divide(BigFloat.BigFloat(-3), BigFloat.BigFloat(2), { maximumSignificantDigits: 1, roundingMode: 'down' })) === -1);
+console.assert(BigFloat.toNumber(BigFloat.divide(BigFloat.BigFloat(-3), BigFloat.BigFloat(-2), { maximumSignificantDigits: 1, roundingMode: 'down' })) === 1);
 
 console.time('BigFloat#toExponential');
 for (var c = 0; c < 10000; c += 1) {

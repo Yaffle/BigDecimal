@@ -43,6 +43,7 @@
 const factory = function (BASE) {
 
   const BIGINT_BASE = BigInt(BASE);
+  const parseRegex = /^\s*([+\-])?(\d+)?\.?(\d+)?(?:e([+\-]?\d+))?\s*$/;
 
 function BigDecimal(significand, exponent) {
   this.significand = significand;
@@ -56,7 +57,7 @@ BigDecimal.BigFloat = BigDecimal.BigDecimal = function (value) {
     if (BASE !== 10) {
       throw new Error();
     }
-    const match = /^\s*([+\-])?(\d+)?\.?(\d+)?(?:e([+\-]?\d+))?\s*$/.exec(value);
+    const match = parseRegex.exec(value);
     if (match == null) {
       throw new RangeError(value);
     }
@@ -246,6 +247,16 @@ function round(a, rounding) {
             quotient = (dividend + 1n) / cachedPower(k) - 1n;
           }
         }
+      } else if (roundingMode === "down") {
+        if (BASE === 2) {
+          if (dividend >= 0n) {
+            quotient = dividend >> cachedBigInt(k);
+          } else {
+            quotient = -((-dividend) >> cachedBigInt(k));
+          }
+        } else {
+          quotient = dividend / cachedPower(k)
+        }
       } else if (roundingMode === "ceil") {
         if (BASE === 2) {
           quotient = -((-dividend) >> cachedBigInt(k));
@@ -254,6 +265,20 @@ function round(a, rounding) {
             quotient = dividend / cachedPower(k);
           } else {
             quotient = (dividend - 1n) / cachedPower(k) + 1n;
+          }
+        }
+      } else if (roundingMode === "up") {
+        if (BASE === 2) {
+          if (dividend >= 0n) {
+            quotient = -((-dividend) >> cachedBigInt(k));
+          } else {
+            quotient = dividend >> cachedBigInt(k);
+          }
+        } else {
+          if (dividend >= 0n) {
+            quotient = (dividend - 1n) / cachedPower(k) + 1n;
+          } else {
+            quotient = (dividend + 1n) / cachedPower(k) - 1n;
           }
         }
       } else {

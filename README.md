@@ -54,7 +54,9 @@ It can be compiled using https://www.npmjs.com/package/babel-plugin-transform-bi
 The `rounding` argument may look like `{maximumFractionDigits: 10, roundingMode: "half-even"}` or `{maximumSignificantDigits: 10, roundingMode: "half-even"}`,
 where the `roundingMode` can be:
  * `"floor"`
+ * `"down"`
  * `"ceil"`
+ * `"up"`
  * `"half-even"`
  * `"half-up"`
  * `"half-down"`.
