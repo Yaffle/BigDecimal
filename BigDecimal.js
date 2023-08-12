@@ -247,6 +247,16 @@ function round(a, rounding) {
             quotient = (dividend + 1n) / cachedPower(k) - 1n;
           }
         }
+      } else if (roundingMode === "down") {
+        if (BASE === 2) {
+          if (dividend >= 0n) {
+            quotient = dividend >> cachedBigInt(k);
+          } else {
+            quotient = -((-dividend) >> cachedBigInt(k));
+          }
+        } else {
+          quotient = dividend / cachedPower(k)
+        }
       } else if (roundingMode === "ceil") {
         if (BASE === 2) {
           quotient = -((-dividend) >> cachedBigInt(k));
@@ -255,6 +265,20 @@ function round(a, rounding) {
             quotient = dividend / cachedPower(k);
           } else {
             quotient = (dividend - 1n) / cachedPower(k) + 1n;
+          }
+        }
+      } else if (roundingMode === "up") {
+        if (BASE === 2) {
+          if (dividend >= 0n) {
+            quotient = -((-dividend) >> cachedBigInt(k));
+          } else {
+            quotient = dividend >> cachedBigInt(k);
+          }
+        } else {
+          if (dividend >= 0n) {
+            quotient = (dividend - 1n) / cachedPower(k) + 1n;
+          } else {
+            quotient = (dividend + 1n) / cachedPower(k) - 1n;
           }
         }
       } else {
