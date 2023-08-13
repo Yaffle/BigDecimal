@@ -123,8 +123,9 @@ function bitLength(a) {
   }
   return (s.length - 1) * 4 + (32 - Math.clz32(Math.min(c, 8)));
 }
+const NumberSafeBits = Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1));
 function bigIntLog2(n) {
-  const k = bitLength(n) - Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1));
+  const k = bitLength(n) - NumberSafeBits;
   const leadingDigits = Number(n >> BigInt(k));
   return Math.log2(leadingDigits) + k;
 }
@@ -480,11 +481,11 @@ BigDecimal.prototype.toString = function () {
   }
   let x = BigDecimal.BigDecimal(this);
   //! https://tc39.es/ecma262/#sec-numeric-types-number-tostring
-  if (BigDecimal.equal(x, BigDecimal.BigDecimal(0))) {
+  if (x.significand === 0n) {
     return "0";
   }
   let sign = "";
-  if (BigDecimal.lessThan(x, BigDecimal.BigDecimal(0))) {
+  if (x.significand < 0n) {
     x = BigDecimal.unaryMinus(x);
     sign = "-";
   }
@@ -539,8 +540,13 @@ function toExponential(significand, exponent, minFraction) {
 }
 
 BigDecimal.prototype.toFixed = function (fractionDigits, roundingMode = "half-up") {
-  const value = BigDecimal.multiply(BigDecimal.BigDecimal(10n**BigInt(fractionDigits)), this);
-  const sign = BigDecimal.lessThan(value, BigDecimal.BigDecimal(0)) ? "-" : "";
+  var value;
+  if (BASE === 10) {
+    value = create(this.significand, sum(this.exponent, BigInt(fractionDigits)));
+  } else {
+    value = BigDecimal.multiply(BigDecimal.BigDecimal(10n**BigInt(fractionDigits)), this);
+  }
+  const sign = value.significand < 0n ? "-" : "";
   const rounded = BigDecimal.round(value, {maximumFractionDigits: 0, roundingMode: roundingMode});
   const a = BigDecimal.abs(rounded);
   return sign + toFixed(BigDecimal.toBigInt(a).toString(), 0 - fractionDigits, fractionDigits);
@@ -594,7 +600,7 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
     }
     return log + logarithm(BigDecimal.divide(x, exponentiate(BigDecimal.BigDecimal(b), log, rounding), rounding), b, rounding);
   };
-  const sign = BigDecimal.lessThan(value, BigDecimal.BigDecimal(0)) ? -1 : +1;
+  const sign = value.significand < 0n ? -1 : +1;
   const roundToInteger = function (a) {
     if (BigDecimal.greaterThan(a, BigDecimal.BigDecimal(0)) &&
         BigDecimal.lessThan(a, BigDecimal.BigDecimal(1)) &&
@@ -668,11 +674,10 @@ function getCountOfDigits(a) { // floor(log(abs(a))/log(BASE)) + 1
 }
 
 BigDecimal.abs = function (a) {
-  return BigDecimal.lessThan(a, BigDecimal.BigDecimal(0)) ? BigDecimal.unaryMinus(a) : a;
+  return a.significand < 0n ? BigDecimal.unaryMinus(a) : a;
 };
 BigDecimal.sign = function (a) {
-  const zero = BigDecimal.BigDecimal(0);
-  return BigDecimal.lessThan(a, zero) ? -1 : (BigDecimal.greaterThan(a, zero) ? +1 : 0);
+  return a.significand < 0n ? -1 : (a.significand > 0n ? +1 : 0);
 };
 BigDecimal.max = function (a, b) {
   if (arguments.length > 2) {
