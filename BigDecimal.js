@@ -129,6 +129,7 @@ function bigIntLog2(n) {
   const leadingDigits = Number(n >> BigInt(k));
   return Math.log2(leadingDigits) + k;
 }
+const log2BaseInv = 1 / Math.log2(BASE);
 function digits(a) { // floor(log(abs(a)) / log(BASE)) + 1
   a = bigIntAbs(a);
   if (BASE === 2) {
@@ -136,9 +137,9 @@ function digits(a) { // floor(log(abs(a)) / log(BASE)) + 1
   }
   const number = Number(BigInt(a));
   if (number < (Number.MAX_SAFE_INTEGER + 1) / 16) {
-    return Math.floor(Math.log2(number + 0.5) / Math.log2(BASE)) + 1;
+    return Math.floor(Math.log2(number + 0.5) * log2BaseInv) + 1;
   }
-  const e = (number < 1 / 0 ? Math.log2(number) : bigIntLog2(a)) / Math.log2(BASE);
+  const e = (number < 1 / 0 ? Math.log2(number) : bigIntLog2(a)) * log2BaseInv;
   if (Math.floor(e * (1 - 32 / (Number.MAX_SAFE_INTEGER + 1))) === Math.floor(e) &&
       Math.floor(e * (1 + 32 / (Number.MAX_SAFE_INTEGER + 1))) === Math.floor(e)) {
     return Math.floor(e) + 1;
@@ -489,22 +490,14 @@ BigDecimal.prototype.toString = function () {
     x = BigDecimal.unaryMinus(x);
     sign = "-";
   }
-  const getSignificand = function (a, log10) {
-    //const s = BigDecimal.multiply(exponentiate(10, -log10), a);
-    //let m = BigDecimal.BigDecimal(10**15);
-    //while (!BigDecimal.equal(BigDecimal.round(BigDecimal.multiply(s, m), {maximumFractionDigits: 0, roundingMode: "half-even"}), BigDecimal.multiply(s, m))) {
-    //  m = BigDecimal.multiply(m, m);
-    //}
-    //return BigDecimal.toBigInt(BigDecimal.multiply(s, m)).toString().replace(/0+$/g, "") || "0";
-    return a.significand.toString().replace(/0+$/g, "") || "0";
-  };
-  const e = getCountOfDigits(x);
-  const significand = getSignificand(x, e);
-  if (!BigDecimal.greaterThan(exponentiate(10, -6n), x) &&
-      BigDecimal.lessThan(x, exponentiate(10, 21n))) {
-    return sign + bigDecimalToPlainString(significand, Number(e - BigInt(significand.length)), 0, 0);
+  const s = x.significand.toString();
+  const e = s.length + Number(x.exponent);
+  const significand = s.charCodeAt(s.length - 1) === '0'.charCodeAt(0) ? (s.replace(/0+$/g, "") || "0") : s;
+  if (e > -6 && e < 22) {
+    return sign + bigDecimalToPlainString(significand, e - significand.length, 0, 0);
   }
-  return sign + bigDecimalToPlainString(significand, -(significand.length - 1), 0, 0) + "e" + (e - 1n >= 0n ? "+" : "") + (e - 1n).toString();
+  const E = BigInt(s.length) + BigInt(x.exponent);
+  return sign + bigDecimalToPlainString(significand, -(significand.length - 1), 0, 0) + "e" + (E - 1n >= 0n ? "+" : "") + (E - 1n).toString();
 };
 
 function bigDecimalToPlainString(significand, exponent, minFraction, minSignificant) {
@@ -519,8 +512,13 @@ function bigDecimalToPlainString(significand, exponent, minFraction, minSignific
     significand = String("0".repeat(0 - e)) + significand;
     e = 0;
   }
-  significand += String("0".repeat(zeros));
-  significand += String("0".repeat(Math.max(minFraction - (significand.length - (e + 1)), 0)));
+  if (zeros !== 0) {
+    significand += String("0".repeat(zeros));
+  }
+  const z = Math.max(minFraction - (significand.length - (e + 1)), 0);
+  if (z !== 0) {
+    significand += String("0".repeat(z));
+  }
   return significand.slice(0, e + 1) + (significand.length > e + 1 ? "." + significand.slice(e + 1) : "");
 }
 // Something like Number#toPrecision: when value is between 10**-6 and 10**p? - to fixed, otherwise - to exponential:
@@ -540,12 +538,10 @@ function toExponential(significand, exponent, minFraction) {
 }
 
 BigDecimal.prototype.toFixed = function (fractionDigits, roundingMode = "half-up") {
-  var value;
-  if (BASE === 10) {
-    value = create(this.significand, sum(this.exponent, BigInt(fractionDigits)));
-  } else {
-    value = BigDecimal.multiply(BigDecimal.BigDecimal(10n**BigInt(fractionDigits)), this);
+  if (Math.floor(fractionDigits) !== fractionDigits) {
+    throw new RangeError();
   }
+  const value = BASE === 10 ? create(this.significand, sum(this.exponent, fractionDigits)) : BigDecimal.multiply(BigDecimal.BigDecimal(10n**BigInt(fractionDigits)), this);
   const sign = value.significand < 0n ? "-" : "";
   const rounded = BigDecimal.round(value, {maximumFractionDigits: 0, roundingMode: roundingMode});
   const a = BigDecimal.abs(rounded);
