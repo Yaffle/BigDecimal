@@ -491,13 +491,12 @@ BigDecimal.prototype.toString = function () {
     sign = "-";
   }
   const s = x.significand.toString();
-  const e = s.length + Number(x.exponent);
-  const significand = s.charCodeAt(s.length - 1) === '0'.charCodeAt(0) ? (s.replace(/0+$/g, "") || "0") : s;
-  if (e > -6 && e < 22) {
-    return sign + bigDecimalToPlainString(significand, e - significand.length, 0, 0);
+  const e = BigInt(s.length) + BigInt(x.exponent);
+  const significand = +s.charCodeAt(s.length - 1) === '0'.charCodeAt(0) ? (s.replace(/0+$/g, "") || "0") : s;
+  if (e > -6n && e < 22n) {
+    return sign + bigDecimalToPlainString(significand, Number(e) - significand.length, 0, 0);
   }
-  const E = BigInt(s.length) + BigInt(x.exponent);
-  return sign + bigDecimalToPlainString(significand, -(significand.length - 1), 0, 0) + "e" + (E - 1n >= 0n ? "+" : "") + (E - 1n).toString();
+  return sign + bigDecimalToPlainString(significand, -(significand.length - 1), 0, 0) + "e" + (e - 1n >= 0n ? "+" : "") + (e - 1n).toString();
 };
 
 function bigDecimalToPlainString(significand, exponent, minFraction, minSignificant) {
