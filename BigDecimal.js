@@ -623,7 +623,7 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
       x = BigDecimal.multiply(exponentiate(ten, fd, rounding), value, rounding);
       x = BigDecimal.abs(x);
       //x = BigDecimal.multiply(x, exponentiate(ten, BigInt(precision - 1), rounding), rounding);
-      const error = BigDecimal.multiply(BigDecimal.multiply(BigDecimal.BigDecimal(bigIntAbs(fd) + BigInt(precision)), exponentiate(BigDecimal.BigDecimal(BASE), -BigInt(rounding.maximumSignificantDigits))), x);
+      const error = BigDecimal.multiply(BigDecimal.multiply(BigDecimal.BigDecimal(bigIntAbs(fd) + BigInt(precision)), exponentiateBase(BASE, -rounding.maximumSignificantDigits)), x);
       //TODO: ?
       if (rounding.maximumSignificantDigits > (Math.abs(Number(fd)) + precision) * Math.log2(10) + digits(value.significand) || BigDecimal.equal(roundToInteger(BigDecimal.add(x, error)), roundToInteger(BigDecimal.subtract(x, error)))) {
         result = BigDecimal.toBigInt(BigDecimal.abs(roundToInteger(x))).toString();
@@ -650,7 +650,9 @@ function exponentiate(a, n) {
   }
   return create(1n, n);
 }
-
+function exponentiateBase(a, n) {
+  return exponentiate(a, n);
+}
 
 
 function getCountOfDigits(a) { // floor(log(abs(a))/log(BASE)) + 1
