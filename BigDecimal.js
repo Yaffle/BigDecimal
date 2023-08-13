@@ -492,12 +492,13 @@ BigDecimal.prototype.toString = function () {
     sign = "-";
   }
   const s = x.significand.toString();
-  const e = BigInt(s.length) + BigInt(x.exponent);
+  const E = sum(x.exponent, s.length - 1);
+  const e = typeof E === 'number' ? E : Number(BigInt(E));
   const significand = +s.charCodeAt(s.length - 1) === '0'.charCodeAt(0) ? (s.replace(/0+$/g, "") || "0") : s;
-  if (e > -6n && e < 22n) {
-    return sign + bigDecimalToPlainString(significand, Number(e) - significand.length, 0, 0);
+  if (e > -7 && e < 21) {
+    return sign + bigDecimalToPlainString(significand, e + 1 - significand.length, 0, 0);
   }
-  return sign + bigDecimalToPlainString(significand, -(significand.length - 1), 0, 0) + "e" + (e - 1n >= 0n ? "+" : "") + (e - 1n).toString();
+  return sign + bigDecimalToPlainString(significand, -(significand.length - 1), 0, 0) + "e" + (e >= 0 ? "+" : "") + E.toString();
 };
 
 function bigDecimalToPlainString(significand, exponent, minFraction, minSignificant) {
@@ -523,18 +524,20 @@ function bigDecimalToPlainString(significand, exponent, minFraction, minSignific
 }
 // Something like Number#toPrecision: when value is between 10**-6 and 10**p? - to fixed, otherwise - to exponential:
 function toPrecision(significand, exponent, minSignificant) {
-  const e = exponent + BigInt(significand.length - 1);
-  if (e < -6n || e >= BigInt(minSignificant)) {
-    return bigDecimalToPlainString(significand, -(significand.length - 1), 0, minSignificant) + "e" + (e < 0n ? "-" : "+") + bigIntAbs(e).toString();
+  const E = sum(exponent, significand.length - 1);
+  const e = typeof E === 'number' ? E : Number(BigInt(E));
+  if (e < -6 || e >= minSignificant) {
+    return bigDecimalToPlainString(significand, -(significand.length - 1), 0, minSignificant) + "e" + (e < 0 ? "" : "+") + E.toString();
   }
-  return bigDecimalToPlainString(significand, Number(BigInt(exponent)), 0, minSignificant);
+  return bigDecimalToPlainString(significand, typeof exponent === 'number' ? exponent : Number(BigInt(exponent)), 0, minSignificant);
 }
 function toFixed(significand, exponent, minFraction) {
   return bigDecimalToPlainString(significand, exponent, minFraction, 0);
 }
 function toExponential(significand, exponent, minFraction) {
-  const e = exponent + BigInt(significand.length - 1);
-  return bigDecimalToPlainString(significand, -(significand.length - 1), 0, minFraction + 1) + "e" + (e < 0n ? "-" : "+") + bigIntAbs(e).toString();
+  const E = sum(exponent, significand.length - 1);
+  const e = typeof E === 'number' ? E : Number(BigInt(E));
+  return bigDecimalToPlainString(significand, -(significand.length - 1), 0, minFraction + 1) + "e" + (e < 0 ? "" : "+") + E.toString();
 }
 
 BigDecimal.prototype.toFixed = function (fractionDigits, roundingMode = "half-up") {
@@ -549,6 +552,10 @@ BigDecimal.prototype.toFixed = function (fractionDigits, roundingMode = "half-up
 };
 
 function getDecimalSignificantAndExponent(value, precision, roundingMode) {
+  if (BASE === 10) {
+    const x = BigDecimal.round(BigDecimal.abs(value), {maximumSignificantDigits: precision, roundingMode: roundingMode});
+    return {significand: x.significand.toString(), exponent: BigInt(x.exponent)};
+  }
   //TODO: fix performance, test
   const exponentiate = function (x, n, rounding) {
     if (n < 0n) {
@@ -576,21 +583,6 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
     const digits = getCountOfDigits(x);
     const v = BigInt(bitLength(digits) - NumberSafeBits);
     const log = BigInt(Math.floor(Number(digits >> v) / Math.log2(b) * BASE_LOG2)) << v;
-    /*const ten = BigDecimal.BigDecimal(10);
-    let b = 1n;
-    while (!BigDecimal.lessThan(x, exponentiate(ten, b, rounding))) {
-      b *= 2n;
-    }
-    let e = 0n;
-    while (b >= 1n) {
-      const u = exponentiate(ten, b, rounding);
-      if (!BigDecimal.lessThan(x, u)) {
-        e += b;
-        x = BigDecimal.divide(x, u, rounding);
-      }
-      b /= 2n;
-    }
-    return e;*/
     if (log < 3n) {
       return log;
     }
@@ -632,10 +624,10 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
       x = BigDecimal.multiply(exponentiate(ten, fd, rounding), value, rounding);
       x = BigDecimal.abs(x);
       //x = BigDecimal.multiply(x, exponentiate(ten, BigInt(precision - 1), rounding), rounding);
-      const error = BigDecimal.multiply(BigDecimal.multiply(BigDecimal.BigDecimal(bigIntAbs(fd) + BigInt(precision)), exponentiate(BigDecimal.BigDecimal(BASE), -BigInt(rounding.maximumSignificantDigits))), x);
+      const error = BigDecimal.multiply(BigDecimal.multiply(BigDecimal.BigDecimal(bigIntAbs(fd) + BigInt(precision)), exponentiateBase(BASE, -rounding.maximumSignificantDigits)), x);
       //TODO: ?
       if (rounding.maximumSignificantDigits > (Math.abs(Number(fd)) + precision) * Math.log2(10) + digits(value.significand) || BigDecimal.equal(roundToInteger(BigDecimal.add(x, error)), roundToInteger(BigDecimal.subtract(x, error)))) {
-      result = BigDecimal.toBigInt(BigDecimal.abs(roundToInteger(x))).toString();
+        result = BigDecimal.toBigInt(BigDecimal.abs(roundToInteger(x))).toString();
       }
     }
     rounding = {maximumSignificantDigits: rounding.maximumSignificantDigits * 2, roundingMode: "half-even"};
@@ -659,7 +651,9 @@ function exponentiate(a, n) {
   }
   return create(1n, n);
 }
-
+function exponentiateBase(a, n) {
+  return exponentiate(a, n);
+}
 
 
 function getCountOfDigits(a) { // floor(log(abs(a))/log(BASE)) + 1
