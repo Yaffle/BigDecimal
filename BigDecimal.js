@@ -43,6 +43,9 @@
 const factory = function (BASE) {
 
   const BIGINT_BASE = BigInt(BASE);
+  const BASE_LOG2 = Math.log2(BASE);
+  const BASE_LOG2_INV = 1 / Math.log2(BASE);
+  const NumberSafeBits = Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1));
   const parseRegex = /^\s*([+\-])?(\d+)?\.?(\d+)?(?:e([+\-]?\d+))?\s*$/;
 
 function BigDecimal(significand, exponent) {
@@ -69,7 +72,7 @@ BigDecimal.BigFloat = BigDecimal.BigDecimal = function (value) {
       const e = getExponent(value);
       const f = value / 2**e;
       const significand = f * (Number.MAX_SAFE_INTEGER + 1) / 2;
-      const exponent = e - (Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1)) - 1);
+      const exponent = e - (NumberSafeBits - 1);
       return create(BigInt(significand), exponent);//TODO: ?
     }
   }
@@ -123,13 +126,11 @@ function bitLength(a) {
   }
   return (s.length - 1) * 4 + (32 - Math.clz32(Math.min(c, 8)));
 }
-const NumberSafeBits = Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1));
 function bigIntLog2(n) {
   const k = bitLength(n) - NumberSafeBits;
   const leadingDigits = Number(n >> BigInt(k));
   return Math.log2(leadingDigits) + k;
 }
-const log2BaseInv = 1 / Math.log2(BASE);
 function digits(a) { // floor(log(abs(a)) / log(BASE)) + 1
   a = bigIntAbs(a);
   if (BASE === 2) {
@@ -137,9 +138,9 @@ function digits(a) { // floor(log(abs(a)) / log(BASE)) + 1
   }
   const number = Number(BigInt(a));
   if (number < (Number.MAX_SAFE_INTEGER + 1) / 16) {
-    return Math.floor(Math.log2(number + 0.5) * log2BaseInv) + 1;
+    return Math.floor(Math.log2(number + 0.5) * BASE_LOG2_INV) + 1;
   }
-  const e = (number < 1 / 0 ? Math.log2(number) : bigIntLog2(a)) * log2BaseInv;
+  const e = (number < 1 / 0 ? Math.log2(number) : bigIntLog2(a)) * BASE_LOG2_INV;
   if (Math.floor(e * (1 - 32 / (Number.MAX_SAFE_INTEGER + 1))) === Math.floor(e) &&
       Math.floor(e * (1 + 32 / (Number.MAX_SAFE_INTEGER + 1))) === Math.floor(e)) {
     return Math.floor(e) + 1;
@@ -374,7 +375,7 @@ BigDecimal.divide = function (a, b, rounding = null) {
     scaling = sum(rounding.maximumFractionDigits, exponent);
   } else {
     // Try to do exact division:
-    scaling = Math.ceil(digits(b.significand) * Math.log2(BASE)) + 1;
+    scaling = Math.ceil(digits(b.significand) * BASE_LOG2) + 1;
   }
   let dividend = BigInt(scaling > 0 ? bigIntScale(a.significand, scaling) : a.significand);
   let divisor = BigInt(scaling < 0 ? bigIntScale(b.significand, 0 - scaling) : b.significand);
@@ -573,8 +574,8 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
       return 0n - logarithm(BigDecimal.divide(BigDecimal.BigDecimal(1), x, rounding), b, rounding);
     }
     const digits = getCountOfDigits(x);
-    const v = BigInt(bitLength(digits) - Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1)));
-    const log = BigInt(Math.floor(Number(digits >> v) / Math.log2(b) * Math.log2(BASE))) << v;
+    const v = BigInt(bitLength(digits) - NumberSafeBits);
+    const log = BigInt(Math.floor(Number(digits >> v) / Math.log2(b) * BASE_LOG2)) << v;
     /*const ten = BigDecimal.BigDecimal(10);
     let b = 1n;
     while (!BigDecimal.lessThan(x, exponentiate(ten, b, rounding))) {
@@ -608,7 +609,7 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
     return {significand: "0", exponent: 0n};
   }
   const ten = BigDecimal.BigDecimal(10);
-  const minimumSignificantDigits = Math.pow(2, Math.ceil(Math.log2(bitLength(bigIntAbs(BigInt(value.exponent)) + 1n) / Math.log2(BASE))));
+  const minimumSignificantDigits = Math.pow(2, Math.ceil(Math.log2(bitLength(bigIntAbs(BigInt(value.exponent)) + 1n) * BASE_LOG2_INV)));
   let rounding = {maximumSignificantDigits: Math.max(minimumSignificantDigits, 8), roundingMode: "half-even"};
   let result = undefined;
   let fd = 0n;
@@ -722,7 +723,7 @@ function tryToMakeCorrectlyRounded(specialValue, f, name) {
     if (name === "log") {
       // log(x) <= BASE**k
       // log(log(x))/log(BASE) <= k
-      return Math.ceil(Math.log2(Math.ceil(Math.max(Number(getCountOfDigits(x)), 1) * Math.log(BASE))) / Math.log2(BASE));
+      return Math.ceil(Math.log2(Math.ceil(Math.max(Number(getCountOfDigits(x)), 1) * Math.log(BASE))) * BASE_LOG2_INV);
     }
     return 1;
   }
@@ -745,7 +746,7 @@ function tryToMakeCorrectlyRounded(specialValue, f, name) {
         roundingMode: "half-even"
       };
       result = undefined;
-      if (Math.max(internalRounding.maximumSignificantDigits + 2, significandDigits(x) + 1) <= Math.log2(Number.MAX_SAFE_INTEGER + 1) && BASE === 2) {
+      if (BASE === 2 && Math.max(internalRounding.maximumSignificantDigits + 2, significandDigits(x) + 1) <= Math.log2(Number.MAX_SAFE_INTEGER + 1)) {
         // Hm... https://www.gnu.org/software/libc/manual/html_node/Errors-in-Math-Functions.html
         const e = x.exponent;
         const exponent = typeof e === 'number' ? e : Number(BigInt(e));
@@ -793,7 +794,7 @@ BigDecimal.log = tryToMakeCorrectlyRounded(1, function log(x, rounding) {
   }
   // https://ru.wikipedia.org/wiki/Логарифм#Разложение_в_ряд_и_вычисление_натурального_логарифма
   const internalRounding = {
-    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log2(rounding.maximumSignificantDigits + 0.5) / Math.log2(BASE)),
+    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log2(rounding.maximumSignificantDigits + 0.5) * BASE_LOG2_INV),
     roundingMode: "half-even"
   };
   if (true) {
@@ -834,14 +835,14 @@ BigDecimal.log = tryToMakeCorrectlyRounded(1, function log(x, rounding) {
 function fromNumberApproximate(number) {
   return BigDecimal.divide(BigDecimal.BigDecimal(Math.floor(number * (Number.MAX_SAFE_INTEGER + 1))),
                            BigDecimal.add(BigDecimal.BigDecimal(Number.MAX_SAFE_INTEGER), BigDecimal.BigDecimal(1)),
-                           {maximumSignificantDigits: Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1) / Math.log2(BASE) + 0.5), roundingMode: "half-even"});
+                           {maximumSignificantDigits: Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1) * BASE_LOG2_INV + 0.5), roundingMode: "half-even"});
 }
 
 BigDecimal.exp = tryToMakeCorrectlyRounded(0, function exp(x, rounding) {
   //! k = round(x / ln(BASE));
   //! exp(x) = exp(x - k * ln(BASE) + k * ln(BASE)) = exp(x - k * ln(BASE)) * BASE**k
   const internalRounding = {
-    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log2(rounding.maximumSignificantDigits + 0.5) / Math.log2(BASE)),
+    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log2(rounding.maximumSignificantDigits + 0.5) * BASE_LOG2_INV),
     roundingMode: "half-even"
   };
   if (!BigDecimal.equal(x, BigDecimal.BigDecimal(0))) {
@@ -876,7 +877,7 @@ function divideByHalfOfPI(x, rounding) { // x = k*pi/2 + r + 2*pi*n, where |r| <
   if (BigDecimal.greaterThan(BigDecimal.abs(x), quarterOfPiApproximated)) {
     //TODO: FIX
     const internalRounding = {
-      maximumSignificantDigits: rounding.maximumSignificantDigits + significandDigits(x) + Number(getCountOfDigits(x)) + 1 + Math.ceil(42 / Math.log2(BASE)),
+      maximumSignificantDigits: rounding.maximumSignificantDigits + significandDigits(x) + Number(getCountOfDigits(x)) + 1 + Math.ceil(42 * BASE_LOG2_INV),
       roundingMode: "half-even"
     };
     const halfOfPi = BigDecimal.multiply(BigDecimal.BigDecimal(2), BigDecimal.atan(BigDecimal.BigDecimal(1), internalRounding));
@@ -894,7 +895,7 @@ function _cos(x, rounding, subtractHalfOfPi) {
   // https://en.wikipedia.org/wiki/Lookup_table#Computing_sines
   // https://en.wikipedia.org/wiki/Trigonometric_functions#Power_series_expansion
   const internalRounding = {
-    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log2(rounding.maximumSignificantDigits + 0.5) / Math.log2(BASE)),
+    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log2(rounding.maximumSignificantDigits + 0.5) * BASE_LOG2_INV),
     roundingMode: "half-even"
   };
   let n = k === 1 || k === 3 ? 1 : 0;
@@ -935,7 +936,7 @@ BigDecimal.atan = tryToMakeCorrectlyRounded(0, function (x, rounding) {
   }
   // https://en.wikipedia.org/wiki/Inverse_trigonometric_functions#:~:text=Alternatively,%20this%20can%20be%20expressed%20as
   const internalRounding = {
-    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log2(rounding.maximumSignificantDigits + 0.5) / Math.log2(BASE)),
+    maximumSignificantDigits: rounding.maximumSignificantDigits + Math.ceil(Math.log2(rounding.maximumSignificantDigits + 0.5) * BASE_LOG2_INV),
     roundingMode: "half-even"
   };
   let n = 0;
@@ -965,7 +966,7 @@ BigDecimal.sqrt = function (x, rounding) {
   const e = getCountOfDigits(x) / 2n;
   const t = exponentiate(BASE, e);
   const y = BigDecimal.multiply(x, exponentiate(BASE, -(2n * e)));
-  const k = Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1) / Math.log2(BASE)) - 1;
+  const k = Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1) * BASE_LOG2_INV) - 1;
   const xn = BigDecimal.toNumber(BigDecimal.round(BigDecimal.multiply(y, exponentiate(BASE, k)), {maximumFractionDigits: 0, roundingMode: "half-even"})) / BASE**k;
   const r = Math.sqrt(xn);
   //TODO: fix
