@@ -581,7 +581,7 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
       return 0n - logarithm(BigDecimal.divide(BigDecimal.BigDecimal(1), x, rounding), b, rounding);
     }
     const digits = getCountOfDigits(x);
-    const v = BigInt(bitLength(digits) - NumberSafeBits);
+    const v = BigInt(Math.max(0, bitLength(digits) - NumberSafeBits));
     const log = BigInt(Math.floor(Number(digits >> v) / Math.log2(b) * BASE_LOG2)) << v;
     if (log < 3n) {
       return log;
@@ -629,7 +629,8 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
       x = BigDecimal.abs(x);
       const error = BigDecimal.multiply(BigDecimal.multiply(BigDecimal.BigDecimal(bigIntAbs(fd) + BigInt(precision)), exponentiateBase(BASE, -rounding.maximumSignificantDigits)), x);
       //TODO: ?
-      if (rounding.maximumSignificantDigits > (Math.abs(Number(fd)) + precision) * Math.log2(10) + digits(value.significand) || BigDecimal.equal(roundToInteger(BigDecimal.add(x, error)), roundToInteger(BigDecimal.subtract(x, error)))) {
+      if (rounding.maximumSignificantDigits > (Math.abs(Number(fd)) + precision) * Math.log2(10) + digits(value.significand) ||
+          BigDecimal.equal(roundToInteger(BigDecimal.add(x, error)), roundToInteger(BigDecimal.subtract(x, error)))) {
         result = BigDecimal.toBigInt(BigDecimal.abs(roundToInteger(x))).toString();
       }
     }
