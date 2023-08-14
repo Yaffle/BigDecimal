@@ -526,7 +526,7 @@ function bigDecimalToPlainString(significand, exponent, minFraction, minSignific
 function toPrecision(significand, exponent, minSignificant) {
   const E = sum(exponent, significand.length - 1);
   const e = typeof E === 'number' ? E : Number(BigInt(E));
-  if (e < -6 || e >= minSignificant) {
+  if (e < -6 || e >= +minSignificant) {
     return bigDecimalToPlainString(significand, -(significand.length - 1), 0, minSignificant) + "e" + (e < 0 ? "" : "+") + E.toString();
   }
   return bigDecimalToPlainString(significand, typeof exponent === 'number' ? exponent : Number(BigInt(exponent)), 0, minSignificant);
@@ -627,7 +627,7 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
       exp = BigDecimal.multiply(exp, t, rounding);
       x = BigDecimal.multiply(x, t, rounding);
       x = BigDecimal.abs(x);
-      const error = BigDecimal.multiply(BigDecimal.multiply(BigDecimal.BigDecimal(bigIntAbs(fd) + BigInt(precision)), exponentiateBase(BASE, -rounding.maximumSignificantDigits)), x);
+      const error = BigDecimal.multiply(BigDecimal.multiply(BigDecimal.BigDecimal(bigIntAbs(fd) + BigInt(precision)), exponentiateBase(BASE, 0 - rounding.maximumSignificantDigits)), x);
       //TODO: ?
       if (rounding.maximumSignificantDigits > (Math.abs(Number(fd)) + precision) * Math.log2(10) + digits(value.significand) ||
           BigDecimal.equal(roundToInteger(BigDecimal.add(x, error)), roundToInteger(BigDecimal.subtract(x, error)))) {
