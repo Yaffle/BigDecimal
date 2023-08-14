@@ -602,28 +602,31 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
   }
   const ten = BigDecimal.BigDecimal(10);
   const minimumSignificantDigits = Math.pow(2, Math.ceil(Math.log2(bitLength(bigIntAbs(BigInt(value.exponent)) + 1n) * BASE_LOG2_INV)));
-  let rounding = {maximumSignificantDigits: Math.max(minimumSignificantDigits, 8), roundingMode: "half-even"};
+  let rounding = {maximumSignificantDigits: Math.max(minimumSignificantDigits, BASE === 2 ? 32 : 8), roundingMode: "half-even"};
   let result = undefined;
   let fd = 0n;
   do {
     let x = BigDecimal.abs(value);
     
     fd = 0n - logarithm(x, 10, rounding);
-    x = BigDecimal.multiply(exponentiate(ten, fd, rounding), x, rounding);
+    let exp = exponentiate(ten, fd, rounding);
+    x = BigDecimal.multiply(exp, x, rounding);
     if (!BigDecimal.lessThan(x, ten)) {
       fd -= 1n;
+      exp = BigDecimal.divide(exp, ten, rounding);
       x = BigDecimal.divide(x, ten, rounding);
     }
     if (BigDecimal.lessThan(x, BigDecimal.BigDecimal(1))) {
       fd += 1n;
+      exp = BigDecimal.multiply(exp, ten, rounding);
       x = BigDecimal.multiply(x, ten, rounding);
     }
     if (!BigDecimal.lessThan(x, BigDecimal.BigDecimal(1)) && BigDecimal.lessThan(x, ten)) {
-      fd -= 1n;
-      fd += BigInt(precision);
-      x = BigDecimal.multiply(exponentiate(ten, fd, rounding), value, rounding);
+      fd += BigInt(precision - 1);
+      const t = exponentiate(ten, BigInt(precision - 1), rounding);
+      exp = BigDecimal.multiply(exp, t, rounding);
+      x = BigDecimal.multiply(x, t, rounding);
       x = BigDecimal.abs(x);
-      //x = BigDecimal.multiply(x, exponentiate(ten, BigInt(precision - 1), rounding), rounding);
       const error = BigDecimal.multiply(BigDecimal.multiply(BigDecimal.BigDecimal(bigIntAbs(fd) + BigInt(precision)), exponentiateBase(BASE, -rounding.maximumSignificantDigits)), x);
       //TODO: ?
       if (rounding.maximumSignificantDigits > (Math.abs(Number(fd)) + precision) * Math.log2(10) + digits(value.significand) || BigDecimal.equal(roundToInteger(BigDecimal.add(x, error)), roundToInteger(BigDecimal.subtract(x, error)))) {
