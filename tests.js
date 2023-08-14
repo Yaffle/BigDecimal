@@ -351,40 +351,40 @@ const someBenchmarks = function (BigDecimal, BASE) {
     return Math.ceil(decimalSignificantDigits * (Math.log2(10) / Math.log2(BASE))) + (BASE !== 10 ? 2 : 0);
   };
 
-  console.time('10 digits of π × 1000');
-  for (var i = 0; i < 1000; i += 1) {
+  console.time('10 digits of π × 10000');
+  for (var i = 0; i < 10000; i += 1) {
     var pi = BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), { maximumSignificantDigits: sd(10), roundingMode: 'half-even' }));
     console.assert(pi.toFixed(10 - 1) === '3.141592654');
   }
-  console.timeEnd('10 digits of π × 1000');
+  console.timeEnd('10 digits of π × 10000');
 
-  console.time('1000 digits of π');
-  var pi = BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), { maximumSignificantDigits: sd(1000), roundingMode: 'half-even' }));
-  console.timeEnd('1000 digits of π');
-  console.log(pi.toFixed(1000 - 1));
+  console.time('2000 digits of π');
+  var pi = BigDecimal.multiply(BigDecimal.BigDecimal(4), BigDecimal.atan(BigDecimal.BigDecimal(1), { maximumSignificantDigits: sd(2000), roundingMode: 'half-even' }));
+  console.timeEnd('2000 digits of π');
+  console.log(pi.toFixed(2000 - 1));
 
-  console.time('10 digits of ℯ × 1000');
-  for (var i = 0; i < 1000; i += 1) {
+  console.time('10 digits of ℯ × 10000');
+  for (var i = 0; i < 10000; i += 1) {
     var e = BigDecimal.exp(BigDecimal.BigDecimal(1), { maximumSignificantDigits: sd(10), roundingMode: 'half-even' });
     console.assert(e.toFixed(9) === '2.718281828');
   }
-  console.timeEnd('10 digits of ℯ × 1000');
+  console.timeEnd('10 digits of ℯ × 10000');
 
-  console.time('1000 digits of ℯ');
-  var e = BigDecimal.exp(BigDecimal.BigDecimal(1), { maximumSignificantDigits: sd(1000), roundingMode: 'half-even' });
-  console.timeEnd('1000 digits of ℯ');
+  console.time('2000 digits of ℯ');
+  var e = BigDecimal.exp(BigDecimal.BigDecimal(1), { maximumSignificantDigits: sd(2000), roundingMode: 'half-even' });
+  console.timeEnd('2000 digits of ℯ');
   console.log(e.toFixed(1000 - 1));
 
-  console.time('10 digits of ln(2) × 1000');
-  for (var i = 0; i < 1000; i += 1) {
+  console.time('10 digits of ln(2) × 10000');
+  for (var i = 0; i < 10000; i += 1) {
     var ln2 = BigDecimal.log(BigDecimal.BigDecimal(2), { maximumSignificantDigits: sd(10), roundingMode: 'half-even' });
     console.assert(ln2.toFixed(10) === '0.6931471806');
   }
-  console.timeEnd('10 digits of ln(2) × 1000');
+  console.timeEnd('10 digits of ln(2) × 10000');
 
-  console.time('1000 digits of ln(2)');
-  var ln2 = BigDecimal.log(BigDecimal.BigDecimal(2), { maximumSignificantDigits: sd(1000), roundingMode: 'half-even' });
-  console.timeEnd('1000 digits of ln(2)');
+  console.time('2000 digits of ln(2)');
+  var ln2 = BigDecimal.log(BigDecimal.BigDecimal(2), { maximumSignificantDigits: sd(2000), roundingMode: 'half-even' });
+  console.timeEnd('2000 digits of ln(2)');
   console.log(ln2.toFixed(1000));
 
 };
@@ -411,6 +411,7 @@ console.assert(BigFloat.greaterThan(a, BigFloat.BigFloat(1))); // bug
 console.assert(BigFloat.lessThan(BigFloat.BigFloat(1), a)); // bug
 console.assert(BigFloat.lessThan(BigFloat.unaryMinus(a), BigFloat.BigFloat(-1))); // bug
 console.assert(BigFloat.greaterThan(BigFloat.BigFloat(-1), BigFloat.unaryMinus(a))); // bug
+console.assert(BigFloat.BigFloat(-1317.6236094638452).toExponential(42) === '-1.317623609463845241407398134469985961914063e+3'); // bug
 
 var x = BigFloat.log(BigFloat.BigFloat(8), {maximumSignificantDigits: 138, roundingMode: 'floor'});
 x = BigFloat.divide(x, BigFloat.BigFloat(4));

@@ -285,9 +285,22 @@ function round(a, rounding) {
           }
         }
       } else {
-        const divisor = BASE === 2 ? 1n << cachedBigInt(k) : cachedPower(k);
-        quotient = dividend / divisor;
-        let twoRemainders = (dividend - divisor * quotient) * 2n;
+        let divisor = 0n;
+        let twoRemainders = 0n;
+        if (BASE === 2) {
+          const K = cachedBigInt(k);
+          divisor = 1n << K;
+          if (dividend >= 0n) {
+            quotient = dividend >> K;
+          } else {
+            quotient = -((-dividend) >> K);
+          }
+          twoRemainders = (dividend - (quotient << K)) * 2n;
+        } else {
+          divisor = cachedPower(k);
+          quotient = dividend / divisor;
+          twoRemainders = (dividend - divisor * quotient) * 2n;
+        }
         if (twoRemainders !== 0n) {
           if (roundingMode === "half-up") {
             twoRemainders += twoRemainders < 0n ? -1n : 1n;
@@ -296,7 +309,7 @@ function round(a, rounding) {
           } else if (roundingMode === "half-even") {
             twoRemainders += (quotient % 2n);
           } else {
-            throw new RangeError("supported roundingMode (floor/ceil/half-even/half-up/half-down) is not given");
+            throw new RangeError("supported roundingMode (floor/ceil/up/down/half-even/half-up/half-down) is not given");
           }
           if (twoRemainders > divisor) {
             quotient += 1n;
