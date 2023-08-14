@@ -590,11 +590,6 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
   };
   const sign = value.significand < 0n ? -1 : +1;
   const roundToInteger = function (a) {
-    if (BigDecimal.greaterThan(a, BigDecimal.BigDecimal(0)) &&
-        BigDecimal.lessThan(a, BigDecimal.BigDecimal(1)) &&
-        BigDecimal.greaterThan(BigDecimal.multiply(BigDecimal.subtract(BigDecimal.BigDecimal(1), a), BigDecimal.BigDecimal(2 * 10)), BigDecimal.BigDecimal(1))) {
-      return BigDecimal.BigDecimal(0);
-    }
     return BigDecimal.round(sign >= 0 ? a : BigDecimal.unaryMinus(a), {maximumFractionDigits: 0, roundingMode: roundingMode});
   };
   if (BigDecimal.equal(value, BigDecimal.BigDecimal(0))) {
@@ -607,31 +602,30 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
   let fd = 0n;
   do {
     let x = BigDecimal.abs(value);
-    
     fd = 0n - logarithm(x, 10, rounding);
-    let exp = exponentiate(ten, fd, rounding);
-    x = BigDecimal.multiply(exp, x, rounding);
+    x = BigDecimal.multiply(exponentiate(ten, fd, rounding), x, rounding);
     if (!BigDecimal.lessThan(x, ten)) {
       fd -= 1n;
-      exp = BigDecimal.divide(exp, ten, rounding);
       x = BigDecimal.divide(x, ten, rounding);
     }
     if (BigDecimal.lessThan(x, BigDecimal.BigDecimal(1))) {
       fd += 1n;
-      exp = BigDecimal.multiply(exp, ten, rounding);
       x = BigDecimal.multiply(x, ten, rounding);
     }
     if (!BigDecimal.lessThan(x, BigDecimal.BigDecimal(1)) && BigDecimal.lessThan(x, ten)) {
       fd += BigInt(precision - 1);
-      const t = exponentiate(ten, BigInt(precision - 1), rounding);
-      exp = BigDecimal.multiply(exp, t, rounding);
-      x = BigDecimal.multiply(x, t, rounding);
-      x = BigDecimal.abs(x);
-      const error = BigDecimal.multiply(BigDecimal.multiply(BigDecimal.BigDecimal(bigIntAbs(fd) + BigInt(precision)), exponentiateBase(BASE, 0 - rounding.maximumSignificantDigits)), x);
-      //TODO: ?
-      if (rounding.maximumSignificantDigits > (Math.abs(Number(fd)) + precision) * Math.log2(10) + digits(value.significand) ||
-          BigDecimal.equal(roundToInteger(BigDecimal.add(x, error)), roundToInteger(BigDecimal.subtract(x, error)))) {
+      //TODO: ?      
+      if (rounding.maximumSignificantDigits > (Math.abs(Number(fd)) + precision) * Math.log2(10) + digits(value.significand)) {
+        x = BigDecimal.abs(value);
+        x = BigDecimal.multiply(x, exponentiate(ten, fd, rounding), rounding)
         result = BigDecimal.toBigInt(BigDecimal.abs(roundToInteger(x))).toString();
+      } else {
+        x = BigDecimal.multiply(x, exponentiate(ten, BigInt(precision - 1), rounding), rounding);
+        x = BigDecimal.abs(x);
+        const error = BigDecimal.multiply(BigDecimal.multiply(BigDecimal.BigDecimal(bigIntAbs(fd) + BigInt(precision)), exponentiateBase(BASE, 0 - rounding.maximumSignificantDigits)), x);
+        if (BigDecimal.equal(roundToInteger(BigDecimal.add(x, error)), roundToInteger(BigDecimal.subtract(x, error)))) {
+          result = BigDecimal.toBigInt(BigDecimal.abs(roundToInteger(x))).toString();
+        }
       }
     }
     rounding = {maximumSignificantDigits: rounding.maximumSignificantDigits * 2, roundingMode: "half-even"};
