@@ -39,4 +39,4 @@ declare class BigDecimal {
     static min(a: BigDecimal, b: BigDecimal): BigDecimal;
 }
 
-export default BigDecimal;
+export { BigDecimal, Rounding, RoundingMode };
