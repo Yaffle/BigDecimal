@@ -126,7 +126,7 @@ console.assert(BigDecimal.add(BigDecimal.BigDecimal('1e+9000000000000000'), BigD
 //console.assert(BigDecimal.divide(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(10), {maximumFractionDigits: 1e15}).toString(), '?'); // performance
 //console.assert(BigDecimal.exp(BigDecimal.BigDecimal('1e+100'), { maximumSignificantDigits: 1, roundingMode: 'half-even' }).toString() === '2e+4342944819032518276511289189166050822943970058036665661144537831658646492088707747292249493384317483');
 //console.assert(BigDecimal.exp(BigDecimal.BigDecimal('-1e+100'), { maximumSignificantDigits: 1, roundingMode: 'half-even' }).toString() === '7e-4342944819032518276511289189166050822943970058036665661144537831658646492088707747292249493384317484');
-console.assert(BigDecimal.exp(BigDecimal.BigDecimal(0), {maximumFractionDigits: 0, roundingMode: 'half-even'}));
+console.assert(BigDecimal.exp(BigDecimal.BigDecimal(0), {maximumFractionDigits: 0, roundingMode: 'half-even'}).toString() === '1');
 
 // fromString
 //console.assert(BigDecimal.BigDecimal(' +1.2e+3 ').toString() === '120');
