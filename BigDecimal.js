@@ -531,8 +531,8 @@ function bigDecimalToPlainString(significand, exponent, minFraction, minSignific
   if (i < significand.length) {
     significand = significand.slice(0, i);
   }
-  const zeros = Math.max(Math.max(0, minFraction - fraction), Math.max(0, minSignificant - significand.length));
-  if (zeros !== 0) {
+  const zeros = Math.max(minFraction - fraction, minSignificant - significand.length);
+  if (zeros > 0) {
     significand += String("0".repeat(zeros));
   }
   return significand.length > e + 1 ? significand.slice(0, e + 1) + "." + significand.slice(e + 1) : significand;
