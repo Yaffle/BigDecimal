@@ -486,6 +486,7 @@ BigDecimal.round = function (a, rounding) {
   return round(a, rounding);
 };
 
+const ZERO_CHAR = "0".charCodeAt(0);
 BigDecimal.prototype.toString = function () {
   //! https://tc39.es/ecma262/#sec-number.prototype.tostring
   if (BASE !== 10) {
@@ -507,7 +508,7 @@ BigDecimal.prototype.toString = function () {
   const s = x.significand.toString();
   const E = sum(x.exponent, s.length - 1);
   const e = typeof E === 'number' ? E : Number(BigInt(E));
-  const significand = +s.charCodeAt(s.length - 1) === '0'.charCodeAt(0) ? (s.replace(/0+$/g, "") || "0") : s;
+  const significand = s.charCodeAt(s.length - 1) === ZERO_CHAR ? (s.replace(/0+$/g, "") || "0") : s;
   if (e > -7 && e < 21) {
     return sign + bigDecimalToPlainString(significand, e + 1 - significand.length, 0, 0);
   }
@@ -517,23 +518,28 @@ BigDecimal.prototype.toString = function () {
 function bigDecimalToPlainString(significand, exponent, minFraction, minSignificant) {
   let e = exponent + 0 + significand.length - 1;
   let i = significand.length - 1;
-  while (i >= 0 && +significand.charCodeAt(i) === "0".charCodeAt(0)) {
+  while (i >= 0 && significand.charCodeAt(i) === ZERO_CHAR) {
     i -= 1;
   }
-  significand = significand.slice(0, i + 1);
-  const zeros = Math.max(0, Math.max(e + 1, minSignificant) - significand.length);
+  if (i < significand.length - 1)
+    significand = significand.slice(0, i + 1);
+  const zeros = minSignificant ? Math.max(e + 1, minSignificant) - significand.length : 0;
   if (e <= -1) {
-    significand = String("0".repeat(0 - e)) + significand;
+    significand = "0".repeat(0 - e) + significand;
     e = 0;
   }
-  if (zeros !== 0) {
-    significand += String("0".repeat(zeros));
+  if (zeros > 0) {
+    significand += "0".repeat(zeros);
   }
-  const z = Math.max(minFraction - (significand.length - (e + 1)), 0);
-  if (z !== 0) {
-    significand += String("0".repeat(z));
+  const z = minFraction - (significand.length - (e + 1));
+  if (z > 0) {
+    significand += "0".repeat(z);
   }
-  return significand.slice(0, e + 1) + (significand.length > e + 1 ? "." + significand.slice(e + 1) : "");
+  if (significand.length > e + 1) {
+    return significand.slice(0, e + 1) + "." + significand.slice(e + 1);
+  } else {
+    return significand;
+  }
 }
 // Something like Number#toPrecision: when value is between 10**-6 and 10**p? - to fixed, otherwise - to exponential:
 function toPrecision(significand, exponent, minSignificant) {
