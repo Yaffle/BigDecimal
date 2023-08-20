@@ -494,20 +494,19 @@ BigDecimal.prototype.toString = function () {
   if (arguments.length !== 0) {
     throw new RangeError("not implemented");
   }
-  let x = BigDecimal.BigDecimal(this);
+  const x = BigDecimal.BigDecimal(this);
+  let significand = x.significand.toString();
   //! https://tc39.es/ecma262/#sec-numeric-types-number-tostring
-  if (x.significand === 0n) {
+  if (significand === "0") {
     return "0";
   }
   let sign = "";
-  if (x.significand < 0n) {
-    x = BigDecimal.unaryMinus(x);
+  if (significand.charCodeAt(0) === "-".charCodeAt(0)) {
+    significand = significand.slice(1);
     sign = "-";
   }
-  const s = x.significand.toString();
-  const E = sum(x.exponent, s.length - 1);
+  const E = sum(x.exponent, significand.length - 1);
   const e = typeof E === 'number' ? E : Number(BigInt(E));
-  const significand = +s.charCodeAt(s.length - 1) === '0'.charCodeAt(0) ? (s.replace(/0+$/g, "") || "0") : s;
   if (e > -7 && e < 21) {
     return sign + bigDecimalToPlainString(significand, e + 1 - significand.length, 0, 0);
   }
@@ -515,25 +514,28 @@ BigDecimal.prototype.toString = function () {
 };
 
 function bigDecimalToPlainString(significand, exponent, minFraction, minSignificant) {
-  let e = exponent + 0 + significand.length - 1;
-  let i = significand.length - 1;
-  while (i >= 0 && +significand.charCodeAt(i) === "0".charCodeAt(0)) {
-    i -= 1;
-  }
-  significand = significand.slice(0, i + 1);
-  const zeros = Math.max(0, Math.max(e + 1, minSignificant) - significand.length);
+  let e = significand.length - 1 + exponent;
   if (e <= -1) {
     significand = String("0".repeat(0 - e)) + significand;
+    minSignificant += 0 - e;
     e = 0;
   }
+  let fraction = significand.length - (e + 1);
+  let i = significand.length;
+  while (fraction > minFraction &&
+         i >= minSignificant &&
+         i >= 1 && 0 + significand.charCodeAt(i - 1) === "0".charCodeAt(0)) {
+    i -= 1;
+    fraction -= 1;
+  }
+  if (i < significand.length) {
+    significand = significand.slice(0, i);
+  }
+  const zeros = Math.max(Math.max(0, minFraction - fraction), Math.max(0, minSignificant - significand.length));
   if (zeros !== 0) {
     significand += String("0".repeat(zeros));
   }
-  const z = Math.max(minFraction - (significand.length - (e + 1)), 0);
-  if (z !== 0) {
-    significand += String("0".repeat(z));
-  }
-  return significand.slice(0, e + 1) + (significand.length > e + 1 ? "." + significand.slice(e + 1) : "");
+  return significand.length > e + 1 ? significand.slice(0, e + 1) + "." + significand.slice(e + 1) : significand;
 }
 // Something like Number#toPrecision: when value is between 10**-6 and 10**p? - to fixed, otherwise - to exponential:
 function toPrecision(significand, exponent, minSignificant) {
