@@ -1,8 +1,31 @@
 
 import BigDecimal2 from './BigDecimalByDecimal.js.js';
-import {BigDecimal, BigFloat} from './BigDecimal.js';
+import {BigDecimal, BigFloat, Decimal128} from './BigDecimal.js';
+
+
+console.assert(Decimal128('3').toString() === '3');
+console.assert(Decimal128.add(Decimal128('1e33'), Decimal128('1')).toString() === '1.000000000000000000000000000000001e+33');
+console.assert(Decimal128.add(Decimal128('1e34'), Decimal128('1')).toString() === '1e+34');
+console.assert(Decimal128('0.000000000000000000000000000000001e-6143').toString() === '1e-6176'); // min value
+console.assert(Decimal128('9.999999999999999999999999999999999e+6144').toString() === '9.999999999999999999999999999999999e+6144'); // max value
+console.assert(Decimal128('0.5e-6176').toString() === '0');
+console.assert(Decimal128('0.6e-6176').toString() === '1e-6176');
+
+console.assert(Decimal128('1e+6145').toString() === 'Infinity');
+console.assert(Decimal128('NaN').toString() === 'NaN');
+console.assert(Decimal128('Infinity').toString() === 'Infinity');
+console.assert(Decimal128.divide(Decimal128('1'), Decimal128('-0')).toString() === '-Infinity');
+
+// TODO: !?
+// Decimal128.multiplyAndAdd (x, y[, rounding])
+// Decimal128.cmp(x, y)
+// Decimal128.prototype.isFinite
+// Decimal128.prototype.isInteger
+// Decimal128.prototype.isNaN
 
 console.time();
+
+BigDecimal.BigDecimal = BigDecimal;
 
 console.assert(BigDecimal.toNumber(BigDecimal.BigDecimal(100)) === 100);
 console.assert(BigDecimal.toNumber(BigDecimal.unaryMinus(BigDecimal.BigDecimal(100))) === -100);
