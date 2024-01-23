@@ -14,9 +14,7 @@ declare class BigDecimal {
     static multiply(a: BigDecimal, b: BigDecimal, rounding?: Rounding): BigDecimal;
     static divide(a: BigDecimal, b: BigDecimal, rounding?: Rounding): BigDecimal;
 
-    static lessThan(a: BigDecimal, b: BigDecimal): boolean;
-    static greaterThan(a: BigDecimal, b: BigDecimal): boolean;
-    static equal(a: BigDecimal, b: BigDecimal): boolean;
+    static cmp(a: BigDecimal, b: BigDecimal): boolean;
     static round(a: BigDecimal, rounding: Rounding): BigDecimal;
 
     toString(): string;

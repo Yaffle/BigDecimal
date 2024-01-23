@@ -68,14 +68,8 @@ BigDecimal.divide = function (a, b, rounding) {
   return a.div(b);
 };
 
-BigDecimal.lessThan = function (a, b) {
-  return a.lt(b);
-};
-BigDecimal.greaterThan = function (a, b) {
-  return a.gt(b);
-};
-BigDecimal.equal = function (a, b) {
-  return a.eq(b);
+BigDecimal.cmp = function (a, b) {
+  return a.lt(b) ? -1 : (b.lt(a) ? +1 : 0);
 };
 
 BigDecimal.cos = function (a, rounding) {

@@ -30,9 +30,7 @@ It can be compiled using https://www.npmjs.com/package/babel-plugin-transform-bi
 
 ## Comparison:
 
-    BigDecimal.equal(a, b)
-    BigDecimal.lessThan(a, b)
-    BigDecimal.greaterThan(a, b)
+    BigDecimal.cmp(a, b)
 
 ## Math: (not in the spec)
 

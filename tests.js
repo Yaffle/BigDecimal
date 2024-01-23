@@ -87,15 +87,15 @@ console.assert(BigDecimal.toNumber(BigDecimal.add(BigDecimal.BigDecimal(100), Bi
 console.assert(BigDecimal.toNumber(BigDecimal.subtract(BigDecimal.BigDecimal(100), BigDecimal.BigDecimal(2))) === 98);
 console.assert(BigDecimal.toNumber(BigDecimal.multiply(BigDecimal.BigDecimal(100), BigDecimal.BigDecimal(2))) === 200);
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(100), BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1, roundingMode: 'floor' })) === 50);
-console.assert(BigDecimal.lessThan(BigDecimal.BigDecimal(2), BigDecimal.BigDecimal(3)) === true);
-console.assert(BigDecimal.lessThan(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(3)) === false);
-console.assert(BigDecimal.lessThan(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(0)) === false);
-console.assert(BigDecimal.lessThan(BigDecimal.BigDecimal(-1), BigDecimal.BigDecimal(0)) === true);
-console.assert(BigDecimal.lessThan(BigDecimal.BigDecimal(0), BigDecimal.BigDecimal(0)) === false);
-console.assert(BigDecimal.lessThan(BigDecimal.BigDecimal(0), BigDecimal.BigDecimal(1)) === true);
-console.assert(BigDecimal.lessThan(BigDecimal.add(BigDecimal.divide(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(100), { maximumSignificantDigits: 1, roundingMode: 'floor' }), BigDecimal.BigDecimal(1)), BigDecimal.BigDecimal(2)));
-console.assert(BigDecimal.lessThan(BigDecimal.add(BigDecimal.divide(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(100), { maximumFractionDigits: 2, roundingMode: 'floor' }), BigDecimal.BigDecimal(1)), BigDecimal.BigDecimal(2)));
-console.assert(BigDecimal.lessThan(BigDecimal.BigDecimal(String(1/3)), BigDecimal.BigDecimal('0')) === false);
+console.assert(BigDecimal.cmp(BigDecimal.BigDecimal(2), BigDecimal.BigDecimal(3)) < 0);
+console.assert(BigDecimal.cmp(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(3)) === 0);
+console.assert(BigDecimal.cmp(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(0)) > 0);
+console.assert(BigDecimal.cmp(BigDecimal.BigDecimal(-1), BigDecimal.BigDecimal(0)) < 0);
+console.assert(BigDecimal.cmp(BigDecimal.BigDecimal(0), BigDecimal.BigDecimal(0)) === 0);
+console.assert(BigDecimal.cmp(BigDecimal.BigDecimal(0), BigDecimal.BigDecimal(1)) < 0);
+console.assert(BigDecimal.cmp(BigDecimal.add(BigDecimal.divide(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(100), { maximumSignificantDigits: 1, roundingMode: 'floor' }), BigDecimal.BigDecimal(1)), BigDecimal.BigDecimal(2)) < 0);
+console.assert(BigDecimal.cmp(BigDecimal.add(BigDecimal.divide(BigDecimal.BigDecimal(1), BigDecimal.BigDecimal(100), { maximumFractionDigits: 2, roundingMode: 'floor' }), BigDecimal.BigDecimal(1)), BigDecimal.BigDecimal(2)) < 0);
+console.assert(BigDecimal.cmp(BigDecimal.BigDecimal(String(1/3)), BigDecimal.BigDecimal('0')) > 0);
 
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(2), { maximumSignificantDigits: 1, roundingMode: 'floor' })) === 1);
 console.assert(BigDecimal.toNumber(BigDecimal.divide(BigDecimal.BigDecimal(3), BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 1, roundingMode: 'floor' })) === -2);
@@ -282,7 +282,7 @@ console.assert(BigDecimal.sin(BigDecimal.BigDecimal('-25.132741228718345'), { ma
 console.assert(BigDecimal.sin(BigDecimal.BigDecimal(0), { maximumSignificantDigits: 16, roundingMode: 'ceil' }).toString() === '0');
 console.assert(BigDecimal.sin(BigDecimal.BigDecimal(0), { maximumSignificantDigits: 16, roundingMode: 'half-even' }).toString() === '0');
 console.assert(BigDecimal.sin(BigDecimal.BigDecimal(0), { maximumSignificantDigits: 16, roundingMode: 'floor' }).toString() === '0');
-console.assert(BigDecimal.equal(BigDecimal.sin(BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 16, roundingMode: 'floor' }), BigDecimal.unaryMinus(BigDecimal.sin(BigDecimal.BigDecimal(2), { maximumSignificantDigits: 16, roundingMode: 'ceil' }))));
+console.assert(BigDecimal.cmp(BigDecimal.sin(BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 16, roundingMode: 'floor' }), BigDecimal.unaryMinus(BigDecimal.sin(BigDecimal.BigDecimal(2), { maximumSignificantDigits: 16, roundingMode: 'ceil' }))) === 0);
 //console.assert(BigDecimal.sin(BigDecimal.BigDecimal('25e-10000'), { maximumSignificantDigits: 1, roundingMode: 'half-even' }).toString() === '?');
 
 // BigDecimal.cos
@@ -304,8 +304,8 @@ console.assert(BigDecimal.atan(BigDecimal.BigDecimal(100), { maximumSignificantD
 console.assert(BigDecimal.atan(BigDecimal.BigDecimal(0), { maximumSignificantDigits: 16, roundingMode: 'ceil' }).toString() === '0');
 console.assert(BigDecimal.atan(BigDecimal.BigDecimal(0), { maximumSignificantDigits: 16, roundingMode: 'half-even' }).toString() === '0');
 console.assert(BigDecimal.atan(BigDecimal.BigDecimal(0), { maximumSignificantDigits: 16, roundingMode: 'floor' }).toString() === '0');
-console.assert(BigDecimal.equal(BigDecimal.atan(BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 16, roundingMode: 'half-even' }), BigDecimal.unaryMinus(BigDecimal.atan(BigDecimal.BigDecimal(2), { maximumSignificantDigits: 16, roundingMode: 'half-even' }))));
-console.assert(BigDecimal.equal(BigDecimal.atan(BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 16, roundingMode: 'floor' }), BigDecimal.unaryMinus(BigDecimal.atan(BigDecimal.BigDecimal(2), { maximumSignificantDigits: 16, roundingMode: 'ceil' }))));
+console.assert(BigDecimal.cmp(BigDecimal.atan(BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 16, roundingMode: 'half-even' }), BigDecimal.unaryMinus(BigDecimal.atan(BigDecimal.BigDecimal(2), { maximumSignificantDigits: 16, roundingMode: 'half-even' }))) === 0);
+console.assert(BigDecimal.cmp(BigDecimal.atan(BigDecimal.BigDecimal(-2), { maximumSignificantDigits: 16, roundingMode: 'floor' }), BigDecimal.unaryMinus(BigDecimal.atan(BigDecimal.BigDecimal(2), { maximumSignificantDigits: 16, roundingMode: 'ceil' }))) === 0);
 console.assert(BigDecimal.atan(BigDecimal.BigDecimal('1.2013940941022994e+0'), { maximumSignificantDigits: 131, roundingMode: 'floor'}).toString() === '0.87662900911742523254158833425786381859637058696571583555234526689495460168293167698711440831010322876710017353790080996006194244976'); // bug
 
 // BigDecimal.sqrt
@@ -484,10 +484,10 @@ console.assert(BigFloat.BigFloat(9.478349671985029e+100).toExponential(0) === '9
 console.assert(BigFloat.BigFloat(9.5e+307).toExponential(0) === '9e+307');
 console.assert(BigFloat.BigFloat(-9.460115477371994e+122).toExponential(0) === '-9e+122'); // bug
 var a = BigFloat.exp(BigFloat.exp(BigFloat.BigFloat(711), {roundingMode: 'floor', maximumSignificantDigits: 1}), {roundingMode: 'floor', maximumSignificantDigits: 1});
-console.assert(BigFloat.greaterThan(a, BigFloat.BigFloat(1))); // bug
-console.assert(BigFloat.lessThan(BigFloat.BigFloat(1), a)); // bug
-console.assert(BigFloat.lessThan(BigFloat.unaryMinus(a), BigFloat.BigFloat(-1))); // bug
-console.assert(BigFloat.greaterThan(BigFloat.BigFloat(-1), BigFloat.unaryMinus(a))); // bug
+console.assert(BigFloat.cmp(a, BigFloat.BigFloat(1)) > 0); // bug
+console.assert(BigFloat.cmp(BigFloat.BigFloat(1), a) < 0); // bug
+console.assert(BigFloat.cmp(BigFloat.unaryMinus(a), BigFloat.BigFloat(-1)) < 0); // bug
+console.assert(BigFloat.cmp(BigFloat.BigFloat(-1), BigFloat.unaryMinus(a)) > 0); // bug
 console.assert(BigFloat.BigFloat(-1317.6236094638452).toExponential(42) === '-1.317623609463845241407398134469985961914063e+3'); // bug
 
 var x = BigFloat.log(BigFloat.BigFloat(8), {maximumSignificantDigits: 138, roundingMode: 'floor'});
