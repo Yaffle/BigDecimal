@@ -149,11 +149,12 @@ function getCountOfDigits(a) { // floor(log(abs(a))/log(BASE)) + 1
   return BigInt(digits(a.significand)) + BigInt(a.exponent);
 }
 
+const zero = BigDecimal(0);
 BigDecimal.abs = function (a) {
-  return a.significand < 0n ? BigDecimal.unaryMinus(a) : a;
+  return BigDecimal.cmp(a, zero) < 0 ? BigDecimal.unaryMinus(a) : a;
 };
 BigDecimal.sign = function (a) {
-  return a.significand < 0n ? -1 : (a.significand > 0n ? +1 : 0);
+  return BigDecimal.cmp(a, zero) < 0 ? -1 : (BigDecimal.cmp(a, zero) > 0 ? +1 : 0);
 };
 BigDecimal.max = function (a, b) {
   if (arguments.length > 2) {

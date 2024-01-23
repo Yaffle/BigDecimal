@@ -65,8 +65,8 @@ testSpecialValues('divide', Decimal128.divide, (a, b) => a / b);
 testSpecialValues('cmp', Decimal128.cmp, (a, b) => a < b ? -1 : (b < a ? +1 : (a == b ? 0 : undefined)));
 
 // TODO: !?
-// Decimal128.multiplyAndAdd (x, y[, rounding])
-// Decimal128.cmp(x, y)
+// Decimal128.multiplyAndAdd(x, y[, rounding])
+// Decimal128.remainder(x, y[, rounding])
 // Decimal128.prototype.isFinite
 // Decimal128.prototype.isInteger
 // Decimal128.prototype.isNaN
