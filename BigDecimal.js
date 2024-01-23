@@ -238,7 +238,7 @@ const cachedPower = cachedFunction(function (k) {
 function round(a, rounding) {
   if (format === 'decimal128') {
     if (rounding == null) {
-      const x = round(round(a, {maximumSignificantDigits: 34, roundingMode: 'half-even'}), {maximumFractionDigits: 6176, roundingMode: 'half-even'});
+      const x = round(a, {maximumFractionDigits: 6176, maximumSignificantDigits: 34, roundingMode: 'half-even'});
       if (x.exponent > 6144) {
         return create(x.significand, SPECIAL_EXPONENT);
       }
@@ -257,14 +257,14 @@ function round(a, rounding) {
       if (dividend === 0n) {
         return create(0n, 0);
       }
-      k = digits(dividend) - maximumSignificantDigits;
+      k = Math.max(k, digits(dividend) - maximumSignificantDigits);
     }
     const maximumFractionDigits = rounding.maximumFractionDigits;
     if (maximumFractionDigits != null) {
       if (!(maximumFractionDigits >= 0)) {
         throw new RangeError("maximumFractionDigits should be non-negative");
       }
-      k = 0 - sum(exponent, maximumFractionDigits);
+      k = Math.max(k, 0 - sum(exponent, maximumFractionDigits));
       //k = Math.min(k, digits(a.significand) + 1);
       //if (k < 0 && k >= -1024 && BASE === 2) {
       //  return create(a.significand << BigInt(-k), 0 - maximumFractionDigits);

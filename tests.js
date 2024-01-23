@@ -10,6 +10,8 @@ console.assert(Decimal128('0.000000000000000000000000000000001e-6143').toString(
 console.assert(Decimal128('9.999999999999999999999999999999999e+6144').toString() === '9.999999999999999999999999999999999e+6144'); // max value
 console.assert(Decimal128('0.5e-6176').toString() === '0');
 console.assert(Decimal128('0.6e-6176').toString() === '1e-6176');
+console.assert(Decimal128('0.50000000000000000000000000000000001e-6176').toString() === '1e-6176'); // double rounding
+console.assert(Decimal128('10000000000000000000000000000000005.000000000000000000000000000000001e-6144').toString() === '1.000000000000000000000000000000001e-6110'); // double rounding
 
 console.assert(Decimal128('1e+6145').toString() === 'Infinity');
 console.assert(Decimal128('NaN').toString() === 'NaN');
@@ -43,7 +45,10 @@ testSpecialValues('divide', Decimal128.divide, (a, b) => a / b);
 
 console.time();
 
+BigDecimal.BigFloat = BigDecimal;
 BigDecimal.BigDecimal = BigDecimal;
+BigFloat.BigDecimal = BigFloat;
+BigFloat.BigFloat = BigFloat;
 
 console.assert(BigDecimal.toNumber(BigDecimal.BigDecimal(100)) === 100);
 console.assert(BigDecimal.toNumber(BigDecimal.unaryMinus(BigDecimal.BigDecimal(100))) === -100);
