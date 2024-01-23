@@ -603,11 +603,8 @@ BigDecimal.prototype.toString = function () {
   const x = convert(this);
   let significand = x.significand.toString();
   if (format != null) {
-    if (x.exponent === SPECIAL_EXPONENT) {
-      return (significand === '0' ? 'NaN' : (significand.charCodeAt(0) === "-".charCodeAt(0) ? '-Infinity' : 'Infinity'));
-    }
-    if (x.exponent === -SPECIAL_EXPONENT) {
-      return "0";//-0
+    if (Math.abs(x.exponent) === SPECIAL_EXPONENT) {
+      return tonum(x).toString();
     }
   }
   //! https://tc39.es/ecma262/#sec-numeric-types-number-tostring
@@ -672,6 +669,11 @@ function toExponential(significand, exponent, minFraction) {
 BigDecimal.prototype.toFixed = function (fractionDigits, roundingMode = "half-up") {
   if (Math.floor(fractionDigits) !== fractionDigits) {
     throw new RangeError();
+  }
+  if (format != null) {
+    if (Math.abs(this.exponent) === SPECIAL_EXPONENT) {
+      return tonum(this).toFixed(fractionDigits);
+    }
   }
   const value = BASE === 10 ? create(this.significand, sum(this.exponent, fractionDigits)) : BigDecimal.multiply(convert(10n**BigInt(fractionDigits)), this);
   const sign = value.significand < 0n ? "-" : "";
@@ -763,11 +765,21 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
 }
 
 BigDecimal.prototype.toPrecision = function (precision, roundingMode = "half-up") {
+  if (format != null) {
+    if (Math.abs(this.exponent) === SPECIAL_EXPONENT) {
+      return tonum(this).toPrecision(precision);
+    }
+  }
   const tmp = getDecimalSignificantAndExponent(this, precision, roundingMode);
   return (BigDecimal.lessThan(this, convert(0)) ? "-" : "") + toPrecision(tmp.significand, tmp.exponent, precision);
 };
 
 BigDecimal.prototype.toExponential = function (fractionDigits, roundingMode = "half-up") {
+  if (format != null) {
+    if (Math.abs(this.exponent) === SPECIAL_EXPONENT) {
+      return tonum(this).toExponential(fractionDigits);
+    }
+  }
   const tmp = getDecimalSignificantAndExponent(this, fractionDigits + 1, roundingMode);
   return (BigDecimal.lessThan(this, convert(0)) ? "-" : "") + toExponential(tmp.significand, tmp.exponent, fractionDigits);
 };

@@ -12,10 +12,24 @@ console.assert(Decimal128('0.5e-6176').toString() === '0');
 console.assert(Decimal128('0.6e-6176').toString() === '1e-6176');
 console.assert(Decimal128('0.50000000000000000000000000000000001e-6176').toString() === '1e-6176'); // double rounding
 console.assert(Decimal128('10000000000000000000000000000000005.000000000000000000000000000000001e-6144').toString() === '1.000000000000000000000000000000001e-6110'); // double rounding
-
 console.assert(Decimal128('1e+6145').toString() === 'Infinity');
+
 console.assert(Decimal128('NaN').toString() === 'NaN');
+console.assert(Decimal128('NaN').toPrecision() === 'NaN');
+console.assert(Decimal128('NaN').toFixed(0) === 'NaN');
+console.assert(Decimal128('NaN').toExponential() === 'NaN');
 console.assert(Decimal128('Infinity').toString() === 'Infinity');
+console.assert(Decimal128('Infinity').toPrecision() === 'Infinity');
+console.assert(Decimal128('Infinity').toFixed(0) === 'Infinity');
+console.assert(Decimal128('Infinity').toExponential() === 'Infinity');
+console.assert(Decimal128('-Infinity').toString() === '-Infinity');
+console.assert(Decimal128('-Infinity').toPrecision() === '-Infinity');
+console.assert(Decimal128('-Infinity').toFixed(0) === '-Infinity');
+console.assert(Decimal128('-Infinity').toExponential() === '-Infinity');
+console.assert(Decimal128('-0').toString() === '0');
+console.assert(Decimal128('-0').toPrecision() === '0');
+console.assert(Decimal128('-0').toFixed(0) === '0');
+console.assert(Decimal128('-0').toExponential() === '0e+0');
 
 console.assert(Decimal128.divide(Decimal128('1'), Decimal128.unaryMinus(Decimal128('0'))).toString() === '-Infinity');
 console.assert(Decimal128.divide(Decimal128('1'), Decimal128('-0')).toString() === '-Infinity');
