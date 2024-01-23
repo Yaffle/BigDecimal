@@ -17,8 +17,6 @@ It can be compiled using https://www.npmjs.com/package/babel-plugin-transform-bi
     a.toFixed(fractionDigits[, roundingMode = "half-up"])
     a.toPrecision(precision[, roundingMode = "half-up"])
     a.toExponential(fractionDigits[, roundingMode = "half-up"])
-    BigDecimal.toBigInt(a) // (not in the spec)
-    BigDecimal.toNumber(a) // (not in the spec, only integers)
 
 
 ## Arithmetic:

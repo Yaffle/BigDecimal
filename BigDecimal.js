@@ -5,19 +5,20 @@
 // https://en.wikipedia.org/wiki/Fixed-point_arithmetic
 
 // Usage:
-// BigDecimal(bigint)
 // BigDecimal(string)
-// BigDecimal(number) (only integers)
-// BigDecimal.toBigInt(a) (not in the spec)
-// BigDecimal.toNumber(a) (not in the spec, only integers)
+// BigDecimal(number)
+// BigDecimal(bigint)
+
 // BigDecimal.unaryMinus(a)
 // BigDecimal.add(a, b[, rounding])
 // BigDecimal.subtract(a, b[, rounding])
 // BigDecimal.multiply(a, b[, rounding])
 // BigDecimal.divide(a, b, rounding)
+
 // BigDecimal.lessThan(a, b)
 // BigDecimal.greaterThan(a, b)
 // BigDecimal.equal(a, b)
+
 // BigDecimal.round(a, rounding)
 // a.toString()
 // a.toFixed(fractionDigits[, roundingMode = "half-up"])
@@ -31,11 +32,13 @@
 // BigDecimal.cos(a, rounding)
 // BigDecimal.atan(a, rounding)
 // BigDecimal.sqrt(a, rounding)
+
 // "simple" Math functions:
 // BigDecimal.abs(a)
 // BigDecimal.sign(a)
 // BigDecimal.max(a, b)
 // BigDecimal.min(a, b)
+
 // (!) Note: consider to use only "half-even" rounding mode and rounding to a maximum number of significant digits for floating-point arithmetic,
 // or only "floor" rounding to a maximum number of fraction digits for fixed-point arithmetic.
 // BigFloat may have better performance.
@@ -47,6 +50,8 @@ const factory = function (BASE, format = null) {
   const BASE_LOG2_INV = 1 / Math.log2(BASE);
   const NumberSafeBits = Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1));
   const parseRegex = /^\s*([+\-])?(\d+)?\.?(\d+)?(?:e([+\-]?\d+))?\s*$/;
+  
+  const defaultRounding = format === 'decimal128' ? {maximumFractionDigits: 6176, maximumSignificantDigits: 34, roundingMode: 'half-even'} : null;
 
 function convert(value) {
   if (value instanceof BigDecimal) {
@@ -94,8 +99,22 @@ function convert(value) {
       const exponent = e - (NumberSafeBits - 1);
       return create(BigInt(significand), exponent);//TODO: ?
     }
+    if (format != null) {
+      const e = getExponent(value);
+      const f = value / 2**e;
+      const significand = f * (Number.MAX_SAFE_INTEGER + 1) / 2;
+      const exponent = e - (NumberSafeBits - 1);
+      if (exponent >= 0) {
+        return BigDecimal.multiply(create(BigInt(significand), 0), create(BigInt(2)**BigInt(exponent), 0));
+      } else if (exponent < 0) {
+        return BigDecimal.divide(create(BigInt(significand), 0), create(BigInt(2)**BigInt(-exponent), 0));        
+      }
+    }
   }
   if (value === 0 && 1 / value < 0) {
+    if (format != null) {
+      return create(-1n, -SPECIAL_EXPONENT); 
+    }
     throw new RangeError();
   }
   let a = create(BigInt(value), 0);
@@ -105,6 +124,9 @@ function convert(value) {
   //  a = b;
   //  b = normalize(a, null);
   //}
+  if (format != null) {
+    a = round(a, defaultRounding);
+  }
   return a;
 }
 
@@ -118,9 +140,7 @@ function BigDecimal(significand, exponent) {
 
 const SPECIAL_EXPONENT = 1/0;
 
-BigDecimal.toNumber = function (a) {
-  return Number(BigInt(BigDecimal.toBigInt(a)));
-};
+//TODO: remove
 BigDecimal.toBigInt = function (a) {
   const e = a.exponent;
   const exponent = typeof e === 'number' ? e : Number(BigInt(e));
@@ -247,7 +267,7 @@ const cachedPower = cachedFunction(function (k) {
 function round(a, rounding) {
   if (format === 'decimal128') {
     if (rounding == null) {
-      const x = round(a, {maximumFractionDigits: 6176, maximumSignificantDigits: 34, roundingMode: 'half-even'});
+      const x = round(a, defaultRounding);
       if (x.exponent > 6144) {
         return x.significand === 0n ? create(0n, 0) : create(x.significand < 0n ? -1n : 1n, SPECIAL_EXPONENT);
       }
@@ -366,6 +386,7 @@ function round(a, rounding) {
   }
   return a;
 }
+
 BigDecimal.unaryMinus = function (a) {
   if (format != null) {
     if (a.exponent === -SPECIAL_EXPONENT) {
@@ -401,7 +422,7 @@ function fromnum(x) {
   throw new Error(x);
 }
 
-BigDecimal.add = function (a, b, rounding = null) {
+BigDecimal.add = function (a, b, rounding = defaultRounding) {
   const as = BigInt(a.significand);
   const bs = BigInt(b.significand);
   const ae = a.exponent;
@@ -445,10 +466,10 @@ BigDecimal.add = function (a, b, rounding = null) {
   }
   return round(create(as + bs, ae), rounding);
 };
-BigDecimal.subtract = function (a, b, rounding = null) {
+BigDecimal.subtract = function (a, b, rounding = defaultRounding) {
   return BigDecimal.add(a, BigDecimal.unaryMinus(b), rounding);
 };
-BigDecimal.multiply = function (a, b, rounding = null) {
+BigDecimal.multiply = function (a, b, rounding = defaultRounding) {
   if (format != null) {
     if (Math.abs(a.exponent) === SPECIAL_EXPONENT || Math.abs(b.exponent) === SPECIAL_EXPONENT) {
       return fromnum(tonum(a) * tonum(b));
@@ -474,7 +495,7 @@ function bigIntUnscale(a, unscaling) {
   }
   return (BASE === 2 ? (a >> cachedBigInt(unscaling)) : a / cachedPower(unscaling));
 }
-BigDecimal.divide = function (a, b, rounding = null) {
+BigDecimal.divide = function (a, b, rounding = defaultRounding) {
   if (format != null) {
     if (Math.abs(a.exponent) === SPECIAL_EXPONENT || Math.abs(b.exponent) === SPECIAL_EXPONENT || b.significand === 0n) {
       return fromnum(tonum(a) / tonum(b));
@@ -1106,7 +1127,7 @@ BigDecimal.sqrt = function (x, rounding) {
   const t = exponentiate(BASE, e);
   const y = BigDecimal.multiply(x, exponentiate(BASE, -(2n * e)));
   const k = Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1) * BASE_LOG2_INV) - 1;
-  const xn = BigDecimal.toNumber(BigDecimal.round(BigDecimal.multiply(y, exponentiate(BASE, k)), {maximumFractionDigits: 0, roundingMode: "half-even"})) / BASE**k;
+  const xn = Number(BigDecimal.toBigInt(BigDecimal.round(BigDecimal.multiply(y, exponentiate(BASE, k)), {maximumFractionDigits: 0, roundingMode: "half-even"}))) / BASE**k;
   const r = Math.sqrt(xn);
   //TODO: fix
   const resultSignificantDigits = 2 * (rounding.maximumSignificantDigits || (rounding.maximumFractionDigits + Math.ceil(significandDigits(x) / 2)) || 1);

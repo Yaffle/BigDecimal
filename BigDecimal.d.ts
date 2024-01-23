@@ -7,9 +7,7 @@ interface Rounding {
 }
 
 declare class BigDecimal {
-    static BigDecimal(value: bigint | string | number | BigDecimal): BigDecimal;
-    static toBigInt(a: BigDecimal): bigint;
-    static toNumber(a: BigDecimal): number;
+    static BigDecimal(value: string | number | bigint | BigDecimal): BigDecimal;
     static unaryMinus(a: BigDecimal): BigDecimal;
     static add(a: BigDecimal, b: BigDecimal, rounding?: Rounding): BigDecimal;
     static subtract(a: BigDecimal, b: BigDecimal, rounding?: Rounding): BigDecimal;

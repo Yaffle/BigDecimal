@@ -43,12 +43,6 @@ function BigDecimal() {
 BigDecimal.BigDecimal = function (value) {
   return Decimal(typeof value === 'number' ? value : value.toString());
 };
-BigDecimal.toBigInt = function (a) {
-  return BigInt(a.toFixed(0));
-};
-BigDecimal.toNumber = function (a) {
-  return a.toNumber();
-};
 BigDecimal.unaryMinus = function (a) {
   return a.negated();
 };

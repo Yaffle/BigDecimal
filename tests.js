@@ -14,6 +14,15 @@ console.assert(Decimal128('0.50000000000000000000000000000000001e-6176').toStrin
 console.assert(Decimal128('10000000000000000000000000000000005.000000000000000000000000000000001e-6144').toString() === '1.000000000000000000000000000000001e-6110'); // double rounding
 console.assert(Decimal128('1e+6145').toString() === 'Infinity');
 console.assert(Decimal128.divide(Decimal128('1'), Decimal128('-1e-7000')).toString() === '-Infinity');
+console.assert(Decimal128.divide(Decimal128('1'), Decimal128('3')).toString() === '0.3333333333333333333333333333333333');
+
+console.assert(Decimal128(3).toString() === '3');
+console.assert(Decimal128(2545562323242232323n).toString() === '2545562323242232323');
+console.assert(Decimal128(true).toString() === '1');
+console.assert(Decimal128(false).toString() === '0');
+console.assert(Decimal128(0.1).toString() === '0.1000000000000000055511151231257827');
+console.assert(Decimal128(-0).toString() === '0');
+console.assert(Decimal128(2n**1024n).toString() === '1.797693134862315907729305190789025e+308');
 
 console.assert(Decimal128('NaN').toString() === 'NaN');
 console.assert(Decimal128('NaN').toPrecision() === 'NaN');
@@ -64,6 +73,13 @@ BigDecimal.BigFloat = BigDecimal;
 BigDecimal.BigDecimal = BigDecimal;
 BigFloat.BigDecimal = BigFloat;
 BigFloat.BigFloat = BigFloat;
+
+BigDecimal.toNumber = function (a) {
+  return Number(a.toString());
+};
+BigFloat.toNumber = function (a) {
+  return Number(a.toExponential(300));  
+};
 
 console.assert(BigDecimal.toNumber(BigDecimal.BigDecimal(100)) === 100);
 console.assert(BigDecimal.toNumber(BigDecimal.unaryMinus(BigDecimal.BigDecimal(100))) === -100);
