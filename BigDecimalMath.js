@@ -1,19 +1,146 @@
 /*jshint esversion:11*/
 
+// Math: (not in the spec)
+// BigDecimal.log(a, rounding)
+// BigDecimal.exp(a, rounding)
+// BigDecimal.sin(a, rounding)
+// BigDecimal.cos(a, rounding)
+// BigDecimal.atan(a, rounding)
+// BigDecimal.sqrt(a, rounding)
+
+// "simple" Math functions:
+// BigDecimal.abs(a)
+// BigDecimal.sign(a)
+// BigDecimal.max(a, b)
+// BigDecimal.min(a, b)
+
 function addMath(BigDecimal, BASE) {
 
   const BASE_LOG2_INV = 1 / Math.log2(BASE);
+  const BIGINT_BASE = BigInt(BASE);
 
-function exponentiate(a, n) {
-  if (+a !== BASE) {
-    throw new RangeError("a should be BASE");//?
+function convert(x) {
+  return BigDecimal(x);
+}
+
+  //TODO: REMOVE(?)
+  const exponentiate = function (x, n) {
+    if (n < 0n) {
+      return BigDecimal.divide(convert(1), exponentiate(x, -BigInt(n)));
+    }
+    let y = undefined;
+    while (n >= 1n) {
+      if (n % 2n === 0n) {
+        x = BigDecimal.multiply(x, x);
+        n /= 2n;
+      } else {
+        y = y == undefined ? x : BigDecimal.multiply(x, y);
+        n -= 1n;
+      }
+    }
+    return y == undefined ? convert(1) : y;
+  };
+
+function exponentiateBase(n) {
+  //TODO: !?
+  //return create(1n, n);
+  return exponentiate(convert(BASE), BigInt(n));
+}
+
+function bigIntAbs(a) {
+  return a < 0n ? 0n - a : a;
+}
+
+  const NumberSafeBits = Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1));
+
+function bitLength(a) {
+  const s = a.toString(16);
+  const c = +s.charCodeAt(0) - "0".charCodeAt(0);
+  if (c <= 0) {
+    throw new RangeError();
   }
-  return create(1n, n);
-}
-function exponentiateBase(a, n) {
-  return exponentiate(a, n);
+  return (s.length - 1) * 4 + (32 - Math.clz32(Math.min(c, 8)));
 }
 
+function bigIntLog2(n) {
+  const k = bitLength(n) - NumberSafeBits;
+  const leadingDigits = Number(n >> BigInt(k));
+  return Math.log2(leadingDigits) + k;
+}
+
+//TODO: REMOVE(?)
+function digits(a) { // floor(log(abs(a)) / log(BASE)) + 1
+  a = bigIntAbs(a);
+  if (BASE === 2) {
+    return bitLength(a);
+  }
+  const number = Number(BigInt(a));
+  if (number < (Number.MAX_SAFE_INTEGER + 1) / 16) {
+    return Math.floor(Math.log2(number + 0.5) * BASE_LOG2_INV) + 1;
+  }
+  const e = (number < 1 / 0 ? Math.log2(number) : bigIntLog2(a)) * BASE_LOG2_INV;
+  if (Math.floor(e * (1 - 32 / (Number.MAX_SAFE_INTEGER + 1))) === Math.floor(e) &&
+      Math.floor(e * (1 + 32 / (Number.MAX_SAFE_INTEGER + 1))) === Math.floor(e)) {
+    return Math.floor(e) + 1;
+  }
+  const i = Math.floor(e + 0.5);
+  return a >= BigInt(cachedPower(i)) ? i + 1 : i;
+}
+
+function cachedFunction(f) {
+  let cache = {};
+  let cacheSize = 0;
+  return function (k) {
+    let lastValue = cache[k];
+    if (lastValue == null) {
+      if (cacheSize > 100) {
+        cache = {};
+        cacheSize = 0;
+      }
+      lastValue = f(k);
+      cache[k] = lastValue;
+      cacheSize += 1;
+    }
+    return lastValue;
+  };
+}
+const cachedBigInt = cachedFunction(function (k) {
+    // k === maximumFractionDigits
+  return BigInt(k);
+});
+const cachedPower = cachedFunction(function (k) {
+  return BIGINT_BASE**BigInt(k);
+});
+
+function bigIntScale(a, scaling) {
+  if (typeof a !== 'bigint') {
+    throw new TypeError();
+  }
+  return (BASE === 2 ? (a << cachedBigInt(scaling)) : cachedPower(scaling) * a);
+}
+function bigIntUnscale(a, unscaling) {
+  if (typeof a !== 'bigint') {
+    throw new TypeError();
+  }
+  return (BASE === 2 ? (a >> cachedBigInt(unscaling)) : a / cachedPower(unscaling));
+}
+
+//TODO: remove
+const toBigInt = function (a) {
+  const e = a.exponent;
+  const exponent = typeof e === 'number' ? e : Number(BigInt(e));
+  if (exponent === 0) {
+    return a.significand;
+  }
+  if (exponent < 0) {
+    const result = bigIntUnscale(a.significand, 0 - exponent);
+    if (bigIntScale(result, 0 - exponent) !== BigInt(a.significand)) {
+      throw new RangeError("The BigDecimal " + a.toString() + " cannot be converted to a BigInt because it is not an integer");
+    }
+    return result;
+  }
+  return bigIntScale(a.significand, exponent);
+};
 
 function getCountOfDigits(a) { // floor(log(abs(a))/log(BASE)) + 1
   if (a.significand === 0n) {
@@ -59,10 +186,6 @@ function significandDigits(a) {
   return to;
 }
 
-function getExponent(number) {
-  const e = Math.floor(Math.log(Math.abs(number)) / Math.log(2)) - 1;
-  return Math.abs(number) / 2**e >= 2 ? e + 1 : e;
-}
 
 
 
@@ -118,7 +241,7 @@ function tryToMakeCorrectlyRounded(specialValue, f, name) {
         result = f(x, internalRounding);
       }
       // round(result - error) === round(result + error)
-      error = BigDecimal.multiply(exponentiate(BASE, -BigInt(internalRounding.maximumSignificantDigits)), BigDecimal.abs(result));
+      error = BigDecimal.multiply(exponentiateBase(-BigInt(internalRounding.maximumSignificantDigits)), BigDecimal.abs(result));
       //if (i > 0) {
         //console.log(i, f.name, x + "", result + "", error + "", BigDecimal.round(BigDecimal.subtract(result, error), rounding) + "", BigDecimal.round(BigDecimal.add(result, error), rounding) + "");
       //}
@@ -153,15 +276,15 @@ BigDecimal.log = tryToMakeCorrectlyRounded(1, function log(x, rounding) {
   if (true) {
     //! ln(f * BASE**k) = ln(f) + k * ln(BASE), where (1/BASE) <= f <= BASE
     let k = getCountOfDigits(x) - 1n;
-    let f = BigDecimal.multiply(exponentiate(BASE, -k), x);
+    let f = BigDecimal.multiply(exponentiateBase(-k), x);
     let ff = BigDecimal.round(BigDecimal.multiply(f, f), {maximumSignificantDigits: 3, roundingMode: "half-even"});
-    if (BigDecimal.cmp(ff, exponentiate(BASE, 1n)) > 0) {
+    if (BigDecimal.cmp(ff, exponentiateBase(1n)) > 0) {
       k += 1n;
-      f = BigDecimal.multiply(exponentiate(BASE, -1n), f);
+      f = BigDecimal.multiply(exponentiateBase(-1n), f);
     }
-    if (BigDecimal.cmp(ff, exponentiate(BASE, -1n)) < 0) {
+    if (BigDecimal.cmp(ff, exponentiateBase(-1n)) < 0) {
       k -= 1n;
-      f = BigDecimal.multiply(exponentiate(BASE, 1n), f);
+      f = BigDecimal.multiply(exponentiateBase(1n), f);
     }
     if (k !== 0n) {
       return BigDecimal.add(BigDecimal.log(f, internalRounding), BigDecimal.multiply(convert(2n * k), BigDecimal.log(sqrt(convert(BASE), internalRounding), internalRounding)));
@@ -206,7 +329,7 @@ BigDecimal.exp = tryToMakeCorrectlyRounded(0, function exp(x, rounding) {
       const k = BigDecimal.round(BigDecimal.divide(x, logBASE, {maximumSignificantDigits: Math.max(Number(getCountOfDigits(x)), 1), roundingMode: "half-even"}), {maximumFractionDigits: 0, roundingMode: "half-even"});
       if (BigDecimal.cmp(k, convert(0)) !== 0) {
         const r = BigDecimal.subtract(x, BigDecimal.multiply(k, logBASE));
-        return BigDecimal.multiply(exponentiate(BASE, toBigInt(k)), BigDecimal.exp(r, internalRounding));
+        return BigDecimal.multiply(exponentiateBase(toBigInt(k)), BigDecimal.exp(r, internalRounding));
       }
     }
   }
@@ -317,14 +440,14 @@ BigDecimal.sqrt = function (x, rounding) {
   }
   // https://en.wikipedia.org/wiki/Nth_root#Using_Newton's_method
   const e = getCountOfDigits(x) / 2n;
-  const t = exponentiate(BASE, e);
-  const y = BigDecimal.multiply(x, exponentiate(BASE, -(2n * e)));
+  const t = exponentiateBase(e);
+  const y = BigDecimal.multiply(x, exponentiateBase(-(2n * e)));
   const k = Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1) * BASE_LOG2_INV) - 1;
-  const xn = Number(toBigInt(BigDecimal.round(BigDecimal.multiply(y, exponentiate(BASE, k)), {maximumFractionDigits: 0, roundingMode: "half-even"}))) / BASE**k;
+  const xn = Number(toBigInt(BigDecimal.round(BigDecimal.multiply(y, exponentiateBase(k)), {maximumFractionDigits: 0, roundingMode: "half-even"}))) / BASE**k;
   const r = Math.sqrt(xn);
   //TODO: fix
   const resultSignificantDigits = 2 * (rounding.maximumSignificantDigits || (rounding.maximumFractionDigits + Math.ceil(significandDigits(x) / 2)) || 1);
-  let result = BigDecimal.multiply(convert(Math.sign(r) * Math.floor(Math.abs(r) * BASE**k + 0.5)), exponentiate(BASE, -k));
+  let result = BigDecimal.multiply(convert(Math.sign(r) * Math.floor(Math.abs(r) * BASE**k + 0.5)), exponentiateBase(-k));
   const iteration = function (result, internalRounding) {
     return BigDecimal.divide(BigDecimal.add(y, BigDecimal.multiply(result, result)), BigDecimal.multiply(convert(2), result), internalRounding);
   };
@@ -338,3 +461,4 @@ BigDecimal.sqrt = function (x, rounding) {
 
 }
 
+export default addMath;

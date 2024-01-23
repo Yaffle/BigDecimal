@@ -33,6 +33,9 @@ It can be compiled using https://www.npmjs.com/package/babel-plugin-transform-bi
     BigDecimal.cmp(a, b)
 
 ## Math: (not in the spec)
+    To use:
+    import addMath from './BigDecimalMath.js';
+    addMath(BigDecimal, 10);
 
     BigDecimal.abs(a)
     BigDecimal.sign(a)

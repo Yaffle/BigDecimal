@@ -1,4 +1,4 @@
-/*jslint bigint: true, vars: true, indent: 2*/
+/*jslint bigint: true, vars: true, indent: 2, esversion:11*/
 
 // https://github.com/tc39/proposal-decimal
 // https://en.wikipedia.org/wiki/Floating-point_arithmetic
@@ -23,20 +23,6 @@
 // a.toPrecision(precision[, roundingMode = "half-up"])
 // a.toExponential(fractionDigits[, roundingMode = "half-up"])
 
-// Math: (not in the spec)
-// BigDecimal.log(a, rounding)
-// BigDecimal.exp(a, rounding)
-// BigDecimal.sin(a, rounding)
-// BigDecimal.cos(a, rounding)
-// BigDecimal.atan(a, rounding)
-// BigDecimal.sqrt(a, rounding)
-
-// "simple" Math functions:
-// BigDecimal.abs(a)
-// BigDecimal.sign(a)
-// BigDecimal.max(a, b)
-// BigDecimal.min(a, b)
-
 // (!) Note: consider to use only "half-even" rounding mode and rounding to a maximum number of significant digits for floating-point arithmetic,
 // or only "floor" rounding to a maximum number of fraction digits for fixed-point arithmetic.
 // BigFloat may have better performance.
@@ -50,6 +36,11 @@ const factory = function (BASE, format = null) {
   const parseRegex = /^\s*([+\-])?(\d+)?\.?(\d+)?(?:e([+\-]?\d+))?\s*$/;
   
   const defaultRounding = format === 'decimal128' ? {maximumFractionDigits: 6176, maximumSignificantDigits: 34, roundingMode: 'half-even'} : null;
+
+function getExponent(number) {
+  const e = Math.floor(Math.log(Math.abs(number)) / Math.log(2)) - 1;
+  return Math.abs(number) / 2**e >= 2 ? e + 1 : e;
+}
 
 function convert(value) {
   if (value instanceof BigDecimal) {
@@ -154,6 +145,21 @@ const toBigInt = function (a) {
   }
   return bigIntScale(a.significand, exponent);
 };
+
+const abs = function (a) {
+  return a.significand < 0n ? BigDecimal.unaryMinus(a) : a;
+};
+
+function getCountOfDigits(a) { // floor(log(abs(a))/log(BASE)) + 1
+  if (a.significand === 0n) {
+    throw new RangeError();
+  }
+  return BigInt(digits(a.significand)) + BigInt(a.exponent);
+}
+function exponentiateBase(n) {
+  return create(BASE, n);
+}
+
 function create(significand, exponent) {
   return /*Object.freeze(*/new BigDecimal(significand, exponent)/*)*/;
 }
@@ -705,13 +711,13 @@ BigDecimal.prototype.toFixed = function (fractionDigits, roundingMode = "half-up
   const value = BASE === 10 ? create(this.significand, sum(this.exponent, fractionDigits)) : BigDecimal.multiply(convert(10n**BigInt(fractionDigits)), this);
   const sign = value.significand < 0n ? "-" : "";
   const rounded = BigDecimal.round(value, {maximumFractionDigits: 0, roundingMode: roundingMode});
-  const a = BigDecimal.abs(rounded);
+  const a = abs(rounded);
   return sign + toFixed(toBigInt(a).toString(), 0 - fractionDigits, fractionDigits);
 };
 
 function getDecimalSignificantAndExponent(value, precision, roundingMode) {
   if (BASE === 10) {
-    const x = BigDecimal.round(BigDecimal.abs(value), {maximumSignificantDigits: precision, roundingMode: roundingMode});
+    const x = BigDecimal.round(abs(value), {maximumSignificantDigits: precision, roundingMode: roundingMode});
     return {significand: x.significand.toString(), exponent: BigInt(x.exponent)};
   }
   //TODO: fix performance, test
@@ -759,7 +765,7 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
   let result = undefined;
   let fd = 0n;
   do {
-    let x = BigDecimal.abs(value);
+    let x = abs(value);
     fd = 0n - logarithm(x, 10, rounding);
     x = BigDecimal.multiply(exponentiate(ten, fd, rounding), x, rounding);
     if (BigDecimal.cmp(x, ten) >= 0) {
@@ -774,15 +780,15 @@ function getDecimalSignificantAndExponent(value, precision, roundingMode) {
       fd += BigInt(precision - 1);
       //TODO: ?      
       if (rounding.maximumSignificantDigits > (Math.abs(Number(fd)) + precision) * Math.log2(10) + digits(value.significand)) {
-        x = BigDecimal.abs(value);
+        x = abs(value);
         x = BigDecimal.multiply(x, exponentiate(ten, fd, rounding), rounding)
-        result = toBigInt(BigDecimal.abs(roundToInteger(x))).toString();
+        result = toBigInt(abs(roundToInteger(x))).toString();
       } else {
         x = BigDecimal.multiply(x, exponentiate(ten, BigInt(precision - 1), rounding), rounding);
-        x = BigDecimal.abs(x);
-        const error = BigDecimal.multiply(BigDecimal.multiply(convert(bigIntAbs(fd) + BigInt(precision)), exponentiateBase(BASE, 0 - rounding.maximumSignificantDigits)), x);
+        x = abs(x);
+        const error = BigDecimal.multiply(BigDecimal.multiply(convert(bigIntAbs(fd) + BigInt(precision)), exponentiateBase(0 - rounding.maximumSignificantDigits)), x);
         if (BigDecimal.cmp(roundToInteger(BigDecimal.add(x, error)), roundToInteger(BigDecimal.subtract(x, error))) === 0) {
-          result = toBigInt(BigDecimal.abs(roundToInteger(x))).toString();
+          result = toBigInt(abs(roundToInteger(x))).toString();
         }
       }
     }
