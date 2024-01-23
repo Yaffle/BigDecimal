@@ -358,13 +358,59 @@ function round(a, rounding) {
   return a;
 }
 BigDecimal.unaryMinus = function (a) {
+  if (format != null) {
+    if (a.exponent === -SPECIAL_EXPONENT) {
+      return create(0n, 0);
+    }
+    if (a.significand === 0n) {
+      return create(-1n, -SPECIAL_EXPONENT);
+    }
+  }
   return create(-BigInt(a.significand), a.exponent);
 };
+
+function tonum(x) {
+  // converts +0, +-Infinity, NaN to corresponding values, and other values to sign(value)
+  return (x.significand < 0n ? -1 : (x.significand > 0n ? +1 : 0)) * (Math.abs(x.exponent) !== SPECIAL_EXPONENT ? 1 : Math.pow(BASE, x.exponent));
+}
+function fromnum(x) {
+  if (x !== x) {
+    return create(0n, SPECIAL_EXPONENT);
+  }
+  if (x === +1/0) {
+    return create(1n, SPECIAL_EXPONENT);    
+  }
+  if (x === -1/0) {
+    return create(-1n, SPECIAL_EXPONENT);
+  }
+  if (x === 0 && 1/x > 0) {
+    return create(0n, 0);    
+  }
+  if (x === 0 && 1/x < 0) {
+    return create(-1n, -SPECIAL_EXPONENT);    
+  }
+  throw new Error(x);
+}
+
 BigDecimal.add = function (a, b, rounding = null) {
   const as = BigInt(a.significand);
   const bs = BigInt(b.significand);
   const ae = a.exponent;
   const be = b.exponent;
+  if (format != null) {
+    if (ae === -SPECIAL_EXPONENT || be === -SPECIAL_EXPONENT) {
+      if (ae === -SPECIAL_EXPONENT && be !== -SPECIAL_EXPONENT) {
+        return b;
+      }
+      if (be === -SPECIAL_EXPONENT && ae !== -SPECIAL_EXPONENT) {
+        return a;
+      }
+      return create(-1n, -SPECIAL_EXPONENT);
+    }
+    if (Math.abs(a.exponent) === SPECIAL_EXPONENT || Math.abs(b.exponent) === SPECIAL_EXPONENT) {
+      return fromnum(tonum(a) + tonum(b));
+    }
+  }
   const bd = diff(ae, be);
   const d = typeof bd === 'number' ? bd : Number(BigInt(bd));
   if (d !== 0) { // optimization
@@ -394,6 +440,17 @@ BigDecimal.subtract = function (a, b, rounding = null) {
   return BigDecimal.add(a, BigDecimal.unaryMinus(b), rounding);
 };
 BigDecimal.multiply = function (a, b, rounding = null) {
+  if (format != null) {
+    if (Math.abs(a.exponent) === SPECIAL_EXPONENT || Math.abs(b.exponent) === SPECIAL_EXPONENT) {
+      return fromnum(tonum(a) * tonum(b));
+    }
+    if (a.significand < 0) {
+      return BigDecimal.unaryMinus(BigDecimal.multiply(BigDecimal.unaryMinus(a), b, rounding));
+    }
+    if (b.significand < 0) {
+      return BigDecimal.unaryMinus(BigDecimal.multiply(a, BigDecimal.unaryMinus(b), rounding));
+    }
+  }
   return normalize(round(create(BigInt(a.significand) * BigInt(b.significand), sum(a.exponent, b.exponent)), rounding), rounding);
 };
 function bigIntScale(a, scaling) {
@@ -410,12 +467,20 @@ function bigIntUnscale(a, unscaling) {
 }
 BigDecimal.divide = function (a, b, rounding = null) {
   if (format != null) {
-    if (b.exponent === -SPECIAL_EXPONENT) {
-      return create(-1n, SPECIAL_EXPONENT);
+    if (Math.abs(a.exponent) === SPECIAL_EXPONENT || Math.abs(b.exponent) === SPECIAL_EXPONENT || b.significand === 0n) {
+      return fromnum(tonum(a) / tonum(b));
+    }
+    if (a.significand < 0) {
+      return BigDecimal.unaryMinus(BigDecimal.divide(BigDecimal.unaryMinus(a), b, rounding));
+    }
+    if (b.significand < 0) {
+      return BigDecimal.unaryMinus(BigDecimal.divide(a, BigDecimal.unaryMinus(b), rounding));
     }
   }
   if (a.significand === 0n) {
-    return a;
+    if (b.significand !== 0n) {
+      return a;
+    }
   }
   const exponent = diff(a.exponent, b.exponent);
   let scaling = 0;
@@ -430,11 +495,6 @@ BigDecimal.divide = function (a, b, rounding = null) {
   }
   let dividend = BigInt(scaling > 0 ? bigIntScale(a.significand, scaling) : a.significand);
   let divisor = BigInt(scaling < 0 ? bigIntScale(b.significand, 0 - scaling) : b.significand);
-  if (format != null) {
-    if (divisor === 0n) {
-      return create(dividend, SPECIAL_EXPONENT);
-    }
-  }
   if (divisor < 0n) {
     dividend = -dividend;
     divisor = -divisor;
@@ -542,6 +602,9 @@ BigDecimal.prototype.toString = function () {
   if (format != null) {
     if (x.exponent === SPECIAL_EXPONENT) {
       return (significand === '0' ? 'NaN' : (significand.charCodeAt(0) === "-".charCodeAt(0) ? '-Infinity' : 'Infinity'));
+    }
+    if (x.exponent === -SPECIAL_EXPONENT) {
+      return "0";//-0
     }
   }
   //! https://tc39.es/ecma262/#sec-numeric-types-number-tostring
