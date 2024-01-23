@@ -89,6 +89,9 @@ function convert(value) {
       return create(BigInt(significand), exponent);//TODO: ?
     }
   }
+  if (value === 0 && 1 / value < 0) {
+    throw new RangeError();
+  }
   let a = create(BigInt(value), 0);
   // `normalize` will change the exponent which is not good for fixed-point arithmetic (?)
   //let b = normalize(a, null);
