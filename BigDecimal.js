@@ -78,7 +78,13 @@ function convert(value) {
     const integer = (match[2] || "");
     const fraction = (match[3] || "");
     const exponent = (match[4] || "0");
-    return round(create(BigInt(sign + integer + fraction), diff(Math.abs(exponent) < Number.MAX_SAFE_INTEGER ? exponent : BigInt(match[4] || "0"), (match[3] || "").length)), null);
+    let result = round(create(BigInt(sign + integer + fraction), diff(Math.abs(exponent) < Number.MAX_SAFE_INTEGER ? exponent : BigInt(match[4] || "0"), (match[3] || "").length)), null);
+    if (format != null) {
+      if (sign === "-" && result.significand === 0n) {
+        result = BigDecimal.unaryMinus(result);
+      }
+    }
+    return result;
   }
   if (typeof value === "number" && Math.floor(value) !== value) {
     if (BASE === 2) {
@@ -243,7 +249,7 @@ function round(a, rounding) {
     if (rounding == null) {
       const x = round(a, {maximumFractionDigits: 6176, maximumSignificantDigits: 34, roundingMode: 'half-even'});
       if (x.exponent > 6144) {
-        return create(x.significand, SPECIAL_EXPONENT);
+        return x.significand === 0n ? create(0n, 0) : create(x.significand < 0n ? -1n : 1n, SPECIAL_EXPONENT);
       }
       return x;
     }
