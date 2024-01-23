@@ -50,7 +50,7 @@ function testSpecialValues(name, f, f2) {
   for (var i = 0; i < specialValues.length; i += 1) {
     for (var j = 0; j < specialValues.length; j += 1) {
       var yv = f(Decimal128((specialValues[i])), Decimal128((specialValues[j])));
-      var y = yv.toString() === '0' ? (Decimal128.divide(Decimal128('1'), yv).toString() === '-Infinity' ? -0 : 0) : Number(yv.toString());
+      var y = name === 'cmp' ? yv : (yv.toString() === '0' ? (Decimal128.divide(Decimal128('1'), yv).toString() === '-Infinity' ? -0 : 0) : Number(yv.toString()));
       var y2 = f2(Number(specialValues[i]), Number(specialValues[j]));
       console.assert(y === y2 && (y !== 0 && y2 !== 0 || 1 / y === 1 / y2) || (y !== y && y2 !== y2), name, specialValues[i], specialValues[j], y, y2);
     }
@@ -59,6 +59,7 @@ function testSpecialValues(name, f, f2) {
 testSpecialValues('add', Decimal128.add, (a, b) => a + b);
 testSpecialValues('multiply', Decimal128.multiply, (a, b) => a * b);
 testSpecialValues('divide', Decimal128.divide, (a, b) => a / b);
+testSpecialValues('cmp', Decimal128.cmp, (a, b) => a < b ? -1 : (b < a ? +1 : (a == b ? 0 : undefined)));
 
 // TODO: !?
 // Decimal128.multiplyAndAdd (x, y[, rounding])

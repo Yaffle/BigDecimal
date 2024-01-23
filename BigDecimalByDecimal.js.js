@@ -69,7 +69,7 @@ BigDecimal.divide = function (a, b, rounding) {
 };
 
 BigDecimal.cmp = function (a, b) {
-  return a.lt(b) ? -1 : (b.lt(a) ? +1 : 0);
+  return a.cmp(b);
 };
 
 BigDecimal.cos = function (a, rounding) {

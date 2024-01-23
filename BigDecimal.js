@@ -565,7 +565,15 @@ BigDecimal.divide = function (a, b, rounding = defaultRounding) {
   }
   return round(create(quotient, diff(exponent, scaling)), rounding);
 };
+function cmpnum(a, b) {
+  return a < b ? -1 : (b < a ? +1 : (a === b ? 0 : undefined));
+}
 function compare(a, b) {
+  if (format != null) {
+    if (Math.abs(a.exponent) === SPECIAL_EXPONENT || Math.abs(b.exponent) === SPECIAL_EXPONENT || b.significand === 0n) {
+      return cmpnum(tonum(a), tonum(b));
+    }
+  }
   const as = BigInt(a.significand);
   const bs = BigInt(b.significand);
   const ae = a.exponent;
