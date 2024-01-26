@@ -16,6 +16,7 @@ console.assert(Decimal128('0.6e-6176').toString() === '1e-6176');
 console.assert(Decimal128('0.50000000000000000000000000000000001e-6176').toString() === '1e-6176'); // double rounding
 console.assert(Decimal128('10000000000000000000000000000000005.000000000000000000000000000000001e-6144').toString() === '1.000000000000000000000000000000001e-6110'); // double rounding
 console.assert(Decimal128('1e+6145').toString() === 'Infinity');
+console.assert(Decimal128('1.0e6145').toString() === 'Infinity'); // bug?
 console.assert(Decimal128.divide(Decimal128('1'), Decimal128('-1e-7000')).toString() === '-Infinity');
 console.assert(Decimal128.divide(Decimal128('1'), Decimal128('3')).toString() === '0.3333333333333333333333333333333333');
 

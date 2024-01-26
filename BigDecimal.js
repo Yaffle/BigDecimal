@@ -272,7 +272,7 @@ function round(a, rounding) {
   if (format === 'decimal128') {
     if (rounding == null) {
       const x = round(a, defaultRounding);
-      if (x.exponent > 6144) {
+      if (digits(x.significand) - 1 + x.exponent > 6144) {
         return x.significand === 0n ? create(0n, 0) : create(x.significand < 0n ? -1n : 1n, SPECIAL_EXPONENT);
       }
       return x;
