@@ -67,6 +67,7 @@ testSpecialValues('cmp', Decimal128.cmp, (a, b) => a < b ? -1 : (b < a ? +1 : (a
 const nonnormalized = true;
 if (nonnormalized) {
   //TODO: rename to .coefficient
+  
   console.assert(Decimal128('1.00').significand === 100n);
   console.assert(Decimal128.unaryMinus(Decimal128('1.00')).significand === -100n);
   console.assert(Decimal128.add(Decimal128('1.00'), Decimal128('2.00')).significand === 300n);
@@ -75,8 +76,13 @@ if (nonnormalized) {
   console.assert(Decimal128.multiply(Decimal128('3.00'), Decimal128('2.0')).significand === 6000n); // a.exponent + b.exponent
   console.assert(Decimal128.divide(Decimal128('4.00'), Decimal128('2.0')).significand === 20n); // a.exponent - b.exponent
 
+  // when the "preferred exponent" cannot be used:
+  console.assert(Decimal128.add(Decimal128('1.00'), Decimal128('1e-34')).significand === 1000000000000000000000000000000000n);
+  console.assert(Decimal128.multiply(Decimal128('3.00'), Decimal128('3333333333333333333333333333333333')).significand === 9999999999999999999999999999999999n);
+
   console.assert(Decimal128.round(Decimal128('1.00'), {maximumFractionDigits: 1}).significand === 10n); //TODO: what is expected?
   console.assert(Decimal128.round(Decimal128('1.00'), {maximumSignificantDigits: 2}).significand === 10n); //TODO: what is expected?
+
 }
 
 // TODO: !?
