@@ -8,7 +8,7 @@ addMath(BigFloat, 2);
 
 console.assert(Decimal128('3').toString() === '3');
 console.assert(Decimal128.add(Decimal128('1e33'), Decimal128('1')).toString() === '1.000000000000000000000000000000001e+33');
-console.assert(Decimal128.add(Decimal128('1e34'), Decimal128('1')).toString() === '1e+34');
+console.assert(Decimal128.add(Decimal128('1e34'), Decimal128('1')).toString() === '1.000000000000000000000000000000000e+34');
 console.assert(Decimal128('0.000000000000000000000000000000001e-6143').toString() === '1e-6176'); // min value
 console.assert(Decimal128('9.999999999999999999999999999999999e+6144').toString() === '9.999999999999999999999999999999999e+6144'); // max value
 console.assert(Decimal128('0.5e-6176').toString() === '0');
@@ -75,6 +75,8 @@ if (nonnormalized) {
   console.assert(Decimal128.subtract(Decimal128('3.00'), Decimal128('2.0')).significand === 100n); // min(a.exponent, b.exponent)
   console.assert(Decimal128.multiply(Decimal128('3.00'), Decimal128('2.0')).significand === 6000n); // a.exponent + b.exponent
   console.assert(Decimal128.divide(Decimal128('4.00'), Decimal128('2.0')).significand === 20n); // a.exponent - b.exponent
+  
+  console.assert(Decimal128('1.00').toString() === '1.00');
 
   // when the "preferred exponent" cannot be used:
   console.assert(Decimal128.add(Decimal128('1.00'), Decimal128('1e-34')).significand === 1000000000000000000000000000000000n);

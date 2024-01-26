@@ -657,10 +657,12 @@ BigDecimal.prototype.toString = function () {
   }
   const E = sum(x.exponent, significand.length - 1);
   const e = typeof E === 'number' ? E : Number(BigInt(E));
+  const normalize = format != null ? false : true;
+  const minSignificant = normalize ? 0 : significand.length;
   if (e > -7 && e < 21) {
-    return sign + bigDecimalToPlainString(significand, e + 1 - significand.length, 0, 0);
+    return sign + bigDecimalToPlainString(significand, e + 1 - significand.length, 0, minSignificant);
   }
-  return sign + bigDecimalToPlainString(significand, -(significand.length - 1), 0, 0) + "e" + (e >= 0 ? "+" : "") + E.toString();
+  return sign + bigDecimalToPlainString(significand, -(significand.length - 1), 0, minSignificant) + "e" + (e >= 0 ? "+" : "") + E.toString();
 };
 
 function bigDecimalToPlainString(significand, exponent, minFraction, minSignificant) {
