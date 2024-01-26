@@ -64,6 +64,21 @@ testSpecialValues('multiply', Decimal128.multiply, (a, b) => a * b);
 testSpecialValues('divide', Decimal128.divide, (a, b) => a / b);
 testSpecialValues('cmp', Decimal128.cmp, (a, b) => a < b ? -1 : (b < a ? +1 : (a == b ? 0 : undefined)));
 
+const nonnormalized = true;
+if (nonnormalized) {
+  //TODO: rename to .coefficient
+  console.assert(Decimal128('1.00').significand === 100n);
+  console.assert(Decimal128.unaryMinus(Decimal128('1.00')).significand === -100n);
+  console.assert(Decimal128.add(Decimal128('1.00'), Decimal128('2.00')).significand === 300n);
+  console.assert(Decimal128.add(Decimal128('1.00'), Decimal128('2.0')).significand === 300n); // min(a.exponent, b.exponent)
+  console.assert(Decimal128.subtract(Decimal128('3.00'), Decimal128('2.0')).significand === 100n); // min(a.exponent, b.exponent)
+  console.assert(Decimal128.multiply(Decimal128('3.00'), Decimal128('2.0')).significand === 6000n); // a.exponent + b.exponent
+  console.assert(Decimal128.divide(Decimal128('4.00'), Decimal128('2.0')).significand === 20n); // a.exponent - b.exponent
+
+  console.assert(Decimal128.round(Decimal128('1.00'), {maximumFractionDigits: 1}).significand === 10n); //TODO: what is expected?
+  console.assert(Decimal128.round(Decimal128('1.00'), {maximumSignificantDigits: 2}).significand === 10n); //TODO: what is expected?
+}
+
 // TODO: !?
 // Decimal128.multiplyAndAdd(x, y[, rounding])
 // Decimal128.remainder(x, y[, rounding])

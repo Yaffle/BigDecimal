@@ -567,6 +567,12 @@ BigDecimal.divide = function (a, b, rounding = defaultRounding) {
       } else {
         quotient += BIGINT_BASE**2n / 2n + 1n;
       }
+    } else {
+      //TODO: optimize
+      while (scaling >= 1 && quotient % BIGINT_BASE === 0n) {
+        quotient /= BIGINT_BASE;
+        scaling -= 1;
+      }
     }
   }
   return round(create(quotient, diff(exponent, scaling)), rounding);
