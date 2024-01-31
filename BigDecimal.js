@@ -35,7 +35,7 @@ const factory = function (BASE, format = null) {
   const NumberSafeBits = Math.floor(Math.log2(Number.MAX_SAFE_INTEGER + 1));
   const parseRegex = /^\s*([+\-])?(\d+)?\.?(\d+)?(?:e([+\-]?\d+))?\s*$/;
   
-  const defaultRounding = format === 'decimal128' ? {maximumFractionDigits: 6176, maximumSignificantDigits: 34, roundingMode: 'half-even'} : null;
+  const defaultRounding = format === 'decimal128' ? {maximumFractionDigits: 6176, maximumSignificantDigits: 34, maximumExponent: 6144, roundingMode: 'half-even'} : null;
 
 function getExponent(number) {
   const e = Math.floor(Math.log(Math.abs(number)) / Math.log(2)) - 1;
@@ -268,14 +268,23 @@ const cachedPower = cachedFunction(function (k) {
   return BIGINT_BASE**BigInt(k);
 });
 
+function applyMaxExponent(x, rounding) {
+  const maximumExponent = rounding.maximumExponent;
+  if (maximumExponent != null) {
+    if (digits(x.significand) - 1 + x.exponent > maximumExponent) {
+      return x.significand === 0n ? create(0n, 0) : create(x.significand < 0n ? -1n : 1n, SPECIAL_EXPONENT);
+    }
+  }
+  return x;
+}
+
 function round(a, rounding) {
   if (format === 'decimal128') {
     if (rounding == null) {
-      const x = round(a, defaultRounding);
-      if (digits(x.significand) - 1 + x.exponent > 6144) {
-        return x.significand === 0n ? create(0n, 0) : create(x.significand < 0n ? -1n : 1n, SPECIAL_EXPONENT);
-      }
-      return x;
+      return round(a, defaultRounding);
+    }
+    if (Math.abs(a.exponent) === SPECIAL_EXPONENT) {
+      return a;
     }
   }
   if (rounding != null) {
@@ -385,8 +394,10 @@ function round(a, rounding) {
           }
         }
       }
-      return create(quotient, sum(exponent, k));
+      const e = sum(exponent, k);
+      return applyMaxExponent(create(quotient, e), rounding);
     }
+    return applyMaxExponent(a, rounding);
   }
   return a;
 }
@@ -396,7 +407,7 @@ BigDecimal.unaryMinus = function (a) {
     if (a.exponent === -SPECIAL_EXPONENT) {
       return create(0n, 0);
     }
-    if (a.significand === 0n) {
+    if (a.significand === 0n && a.exponent !== SPECIAL_EXPONENT) {
       return create(-1n, -SPECIAL_EXPONENT);
     }
   }
@@ -434,10 +445,10 @@ BigDecimal.add = function (a, b, rounding = defaultRounding) {
   if (format != null) {
     if (ae === -SPECIAL_EXPONENT || be === -SPECIAL_EXPONENT) {
       if (ae === -SPECIAL_EXPONENT && be !== -SPECIAL_EXPONENT) {
-        return b;
+        return round(b, rounding);
       }
       if (be === -SPECIAL_EXPONENT && ae !== -SPECIAL_EXPONENT) {
-        return a;
+        return round(a, rounding);
       }
       return create(-1n, -SPECIAL_EXPONENT);
     }
@@ -473,19 +484,26 @@ BigDecimal.add = function (a, b, rounding = defaultRounding) {
 BigDecimal.subtract = function (a, b, rounding = defaultRounding) {
   return BigDecimal.add(a, BigDecimal.unaryMinus(b), rounding);
 };
+function toSignedZero(a, b, p) {
+  if (format != null) {
+    if (p.significand === 0n || p.exponent === -SPECIAL_EXPONENT) {
+      if (a.significand < 0n) {
+        return toSignedZero(BigDecimal.unaryMinus(a), b, BigDecimal.unaryMinus(p));
+      }
+      if (b.significand < 0n) {
+        return toSignedZero(a, BigDecimal.unaryMinus(b), BigDecimal.unaryMinus(p));
+      }
+    }
+  }
+  return p;
+}
 BigDecimal.multiply = function (a, b, rounding = defaultRounding) {
   if (format != null) {
     if (Math.abs(a.exponent) === SPECIAL_EXPONENT || Math.abs(b.exponent) === SPECIAL_EXPONENT) {
       return fromnum(tonum(a) * tonum(b));
     }
-    if (a.significand < 0) {
-      return BigDecimal.unaryMinus(BigDecimal.multiply(BigDecimal.unaryMinus(a), b, rounding));
-    }
-    if (b.significand < 0) {
-      return BigDecimal.unaryMinus(BigDecimal.multiply(a, BigDecimal.unaryMinus(b), rounding));
-    }
   }
-  return normalize(round(create(BigInt(a.significand) * BigInt(b.significand), sum(a.exponent, b.exponent)), rounding), rounding);
+  return toSignedZero(a, b, normalize(round(create(BigInt(a.significand) * BigInt(b.significand), sum(a.exponent, b.exponent)), rounding), rounding));
 };
 function bigIntScale(a, scaling) {
   if (typeof a !== 'bigint') {
@@ -504,22 +522,11 @@ BigDecimal.divide = function (a, b, rounding = defaultRounding) {
     if (Math.abs(a.exponent) === SPECIAL_EXPONENT || Math.abs(b.exponent) === SPECIAL_EXPONENT || b.significand === 0n) {
       return fromnum(tonum(a) / tonum(b));
     }
-    if (a.significand < 0) {
-      return BigDecimal.unaryMinus(BigDecimal.divide(BigDecimal.unaryMinus(a), b, rounding));
-    }
-    if (b.significand < 0) {
-      return BigDecimal.unaryMinus(BigDecimal.divide(a, BigDecimal.unaryMinus(b), rounding));
-    }
-  }
-  if (a.significand === 0n) {
-    if (b.significand !== 0n) {
-      return a;
-    }
   }
   const exponent = diff(a.exponent, b.exponent);
   let scaling = 0;
   if (rounding != null && rounding.maximumSignificantDigits != null) {
-    scaling = rounding.maximumSignificantDigits + (digits(b.significand) - digits(a.significand));
+    scaling = rounding.maximumSignificantDigits + ((b.significand === 0n ? 0 : digits(b.significand)) - (a.significand === 0n ? 0 : digits(a.significand)));
   } else if (rounding != null && rounding.maximumFractionDigits != null) {
     //scaling = BigInt(rounding.maximumFractionDigits) + bigIntMax(a.exponent, 0n) + bigIntMax(0n - b.exponent, 0n) - bigIntMin(a.exponent - b.exponent + BigInt(digits(a.significand) - digits(b.significand)), 0n);
     scaling = sum(rounding.maximumFractionDigits, exponent);
@@ -575,7 +582,7 @@ BigDecimal.divide = function (a, b, rounding = defaultRounding) {
       }
     }
   }
-  return round(create(quotient, diff(exponent, scaling)), rounding);
+  return toSignedZero(a, b, round(create(quotient, diff(exponent, scaling)), rounding));
 };
 function cmpnum(a, b) {
   return a < b ? -1 : (b < a ? +1 : (a === b ? 0 : undefined));

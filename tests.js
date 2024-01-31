@@ -20,6 +20,11 @@ console.assert(Decimal128('1.0e6145').toString() === 'Infinity'); // bug?
 console.assert(Decimal128.divide(Decimal128('1'), Decimal128('-1e-7000')).toString() === '-Infinity');
 console.assert(Decimal128.divide(Decimal128('1'), Decimal128('3')).toString() === '0.3333333333333333333333333333333333');
 
+// bugs:
+console.assert(Decimal128.add(Decimal128('9e+6144'), Decimal128('1e+6144')).toString() === 'Infinity');
+console.assert(Decimal128.add(Decimal128('1.5'), Decimal128('-0'), {maximumFractionDigits: 0, roundingMode: 'floor'}).toString() === '1');
+console.assert(Decimal128.divide(Decimal128('-1e-32'), Decimal128('2e+6144'), {maximumFractionDigits: 6176, roundingMode: 'ceil'}).toString() === '0');
+
 console.assert(Decimal128(3).toString() === '3');
 console.assert(Decimal128(2545562323242232323n).toString() === '2545562323242232323');
 console.assert(Decimal128(true).toString() === '1');
@@ -60,7 +65,10 @@ function testSpecialValues(name, f, f2) {
     }
   }
 }
+testSpecialValues('round', Decimal128.round, (a) => a);
+testSpecialValues('unaryMinus', Decimal128.unaryMinus, (a) => -a);
 testSpecialValues('add', Decimal128.add, (a, b) => a + b);
+testSpecialValues('subtract', Decimal128.subtract, (a, b) => a - b);
 testSpecialValues('multiply', Decimal128.multiply, (a, b) => a * b);
 testSpecialValues('divide', Decimal128.divide, (a, b) => a / b);
 testSpecialValues('cmp', Decimal128.cmp, (a, b) => a < b ? -1 : (b < a ? +1 : (a == b ? 0 : undefined)));
