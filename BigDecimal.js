@@ -14,10 +14,9 @@
 // BigDecimal.subtract(a, b[, rounding])
 // BigDecimal.multiply(a, b[, rounding])
 // BigDecimal.divide(a, b, rounding)
-
 // BigDecimal.cmp(a, b)
-
 // BigDecimal.round(a, rounding)
+
 // a.toString()
 // a.toFixed(fractionDigits[, roundingMode = "half-up"])
 // a.toPrecision(precision[, roundingMode = "half-up"])
@@ -177,7 +176,7 @@ function bigIntAbs(a) {
 // floor(log2(a)) + 1 if a > 0
 function bitLength(a) {
   const s = a.toString(16);
-  const c = +s.charCodeAt(0) - "0".charCodeAt(0);
+  const c = +s.charCodeAt(0) - +"0".charCodeAt(0);
   if (c <= 0) {
     throw new RangeError();
   }
@@ -658,7 +657,7 @@ BigDecimal.prototype.toString = function () {
     return "0";
   }
   let sign = "";
-  if (significand.charCodeAt(0) === "-".charCodeAt(0)) {
+  if (+significand.charCodeAt(0) === +"-".charCodeAt(0)) {
     significand = significand.slice(1);
     sign = "-";
   }
@@ -682,15 +681,15 @@ function bigDecimalToPlainString(significand, exponent, minFraction, minSignific
   let fraction = significand.length - (e + 1);
   let i = significand.length;
   while (fraction > minFraction &&
-         i >= minSignificant &&
-         i >= 1 && 0 + significand.charCodeAt(i - 1) === "0".charCodeAt(0)) {
+         +i >= +minSignificant &&
+         i >= 1 && +significand.charCodeAt(i - 1) === +"0".charCodeAt(0)) {
     i -= 1;
     fraction -= 1;
   }
-  if (i < significand.length) {
+  if (+i < +significand.length) {
     significand = significand.slice(0, i);
   }
-  const zeros = Math.max(minFraction - fraction, minSignificant - significand.length);
+  const zeros = Math.max(minFraction - fraction, +minSignificant - +significand.length);
   if (zeros > 0) {
     significand += String("0".repeat(zeros));
   }
