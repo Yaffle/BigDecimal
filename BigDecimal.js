@@ -632,6 +632,17 @@ if (BASE !== 2 || d >= 9007199254740992 || d <= -9007199254740992) {
 BigDecimal.cmp = function (a, b) {
   return compare(a, b);
 };
+
+BigDecimal.equal = function (a, b) {
+  return compare(a, b) === 0;
+};
+BigDecimal.lessThan = function (a, b) {
+  return compare(a, b) < 0;
+};
+BigDecimal.greaterThan = function (a, b) {
+  return compare(a, b) > 0;
+};
+
 BigDecimal.round = function (a, rounding) {
   //TODO: quick round algorithm (?)
   return round(a, rounding);

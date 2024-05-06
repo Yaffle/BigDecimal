@@ -1,6 +1,6 @@
 {
   "name": "@yaffle/bigdecimal",
-  "version": "1.0.37",
+  "version": "2.0.0",
   "description": "Arbitrary precision decimal arithmetic library. Polyfill for decimal proposal. Implemented on the top of BigInt.",
   "main": "BigDecimal.js",
   "types": "BigDecimal.d.ts",
@@ -20,10 +20,11 @@
   ],
   "files": [
     "BigDecimal.js",
+    "BigDecimalMath.js",
     "BigDecimal.d.ts"
   ],
   "author": "Viktor Mukhachev",
-  "license": "ISC",
+  "license": "$$$",
   "bugs": {
     "url": "https://github.com/Yaffle/BigDecimal/issues"
   },
@@ -31,8 +32,6 @@
   "type": "module",
   "devDependencies": {
     "decimal.js": "^10.2.0"
-  },
-  "dependencies": {
     "http-server": "^14.1.1"
   }
 }
