@@ -849,4 +849,8 @@ const BigDecimal = factory(10);
 const BigFloat = factory(2);
 const Decimal128 = factory(10, 'decimal128');
 
+BigDecimal.BigDecimal = BigDecimal;
+BigFloat.BigFloat = BigFloat;
+Decimal128.Decimal128 = Decimal128;
+
 export {BigDecimal, BigFloat, Decimal128};
