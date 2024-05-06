@@ -330,7 +330,7 @@ BigDecimal.exp = tryToMakeCorrectlyRounded(0, function exp(x, rounding) {
       const k = BigDecimal.round(BigDecimal.divide(x, logBASE, {maximumSignificantDigits: Math.max(Number(getCountOfDigits(x)), 1), roundingMode: "half-even"}), {maximumFractionDigits: 0, roundingMode: "half-even"});
       if (BigDecimal.cmp(k, convert(0)) !== 0) {
         const r = BigDecimal.subtract(x, BigDecimal.multiply(k, logBASE));
-        return BigDecimal.multiply(exponentiateBase(toBigInt(k)), BigDecimal.exp(r, internalRounding));
+        return BigDecimal.multiply(exponentiateBase(BigInt(toBigInt(k))), BigDecimal.exp(r, internalRounding));
       }
     }
   }
@@ -360,7 +360,7 @@ function divideByHalfOfPI(x, rounding) { // x = k*pi/2 + r + 2*pi*n, where |r| <
     const halfOfPi = BigDecimal.multiply(convert(2), BigDecimal.atan(convert(1), internalRounding));
     const i = BigDecimal.round(BigDecimal.divide(x, halfOfPi, {maximumSignificantDigits: Math.max(Number(getCountOfDigits(x)), 1), roundingMode: "half-even"}), {maximumFractionDigits: 0, roundingMode: "half-even"});
     const remainder = BigDecimal.subtract(x, BigDecimal.multiply(i, halfOfPi));
-    return {remainder: remainder, k: (Number(toBigInt(i) % 4n) + 4) % 4};
+    return {remainder: remainder, k: (Number(BigInt(toBigInt(i)) % 4n) + 4) % 4};
   }
   return {remainder: x, k: 0};
 }
