@@ -31,7 +31,7 @@
   "homepage": "https://github.com/Yaffle/BigDecimal#readme",
   "type": "module",
   "devDependencies": {
-    "decimal.js": "^10.2.0"
+    "decimal.js": "^10.2.0",
     "http-server": "^14.1.1"
   }
 }
